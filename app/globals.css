@@ -1,0 +1,28 @@
+@import 'tailwindcss';
+@import 'tw-animate-css';
+@import 'shadcn/tailwind.css';
+
+@theme inline {
+  --color-background: var(--background); --color-foreground: var(--foreground);
+  --color-card: var(--card); --color-card-foreground: var(--card-foreground);
+  --color-primary: var(--primary); --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary); --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted); --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent); --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive); --color-border: var(--border); --color-input: var(--input); --color-ring: var(--ring);
+  --font-sans: var(--font-noto-sans); --radius-sm: calc(var(--radius) * .65); --radius-md: calc(var(--radius) * .8);
+  --radius-lg: var(--radius); --radius-xl: calc(var(--radius) * 1.35); --radius-2xl: calc(var(--radius) * 1.8);
+}
+:root {
+  --background: oklch(.975 .018 83); --foreground: oklch(.245 .035 53); --card: oklch(1 0 0); --card-foreground: var(--foreground);
+  --primary: oklch(.47 .145 41); --primary-foreground: oklch(.99 .008 80); --secondary: oklch(.91 .075 80); --secondary-foreground: oklch(.36 .075 48);
+  --muted: oklch(.94 .018 77); --muted-foreground: oklch(.49 .038 53); --accent: oklch(.9 .08 150); --accent-foreground: oklch(.33 .09 150);
+  --destructive: oklch(.58 .22 28); --border: oklch(.87 .03 74); --input: oklch(.85 .03 74); --ring: oklch(.55 .14 42); --radius: .8rem;
+}
+@layer base {
+  * { @apply border-border outline-ring/50; }
+  html { @apply font-sans; }
+  h1, h2 { letter-spacing: -.018em !important; font-weight: 800 !important; }
+  body { @apply bg-background text-foreground; background-image: radial-gradient(circle at 15% 8%, rgb(255 255 255 / .95), transparent 28%), linear-gradient(135deg, transparent 0 48%, rgb(124 74 35 / .025) 48% 52%, transparent 52%); background-size: auto, 28px 28px; }
+  button, a, select { touch-action: manipulation; }
+}
