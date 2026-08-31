@@ -10,7 +10,7 @@
   --color-muted: var(--muted); --color-muted-foreground: var(--muted-foreground);
   --color-accent: var(--accent); --color-accent-foreground: var(--accent-foreground);
   --color-destructive: var(--destructive); --color-border: var(--border); --color-input: var(--input); --color-ring: var(--ring);
-  --font-sans: var(--font-noto-sans); --radius-sm: calc(var(--radius) * .65); --radius-md: calc(var(--radius) * .8);
+  --font-sans: var(--font-noto-sans), Arial, Helvetica, sans-serif; --font-heading: var(--font-noto-sans), Arial, Helvetica, sans-serif; --radius-sm: calc(var(--radius) * .65); --radius-md: calc(var(--radius) * .8);
   --radius-lg: var(--radius); --radius-xl: calc(var(--radius) * 1.35); --radius-2xl: calc(var(--radius) * 1.8);
 }
 :root {
@@ -21,7 +21,7 @@
 }
 @layer base {
   * { @apply border-border outline-ring/50; }
-  html { @apply font-sans; }
+  body { @apply font-sans; }
   h1, h2 { letter-spacing: -.018em !important; font-weight: 800 !important; }
   body { @apply bg-background text-foreground; background-image: radial-gradient(circle at 15% 8%, rgb(255 255 255 / .95), transparent 28%), linear-gradient(135deg, transparent 0 48%, rgb(124 74 35 / .025) 48% 52%, transparent 52%); background-size: auto, 28px 28px; }
   button, a, select { touch-action: manipulation; }
