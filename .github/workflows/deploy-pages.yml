@@ -29,6 +29,11 @@ jobs:
         run: npm ci
       - name: Compilar la aplicación
         run: npm run build
+      - name: Ajustar las rutas para GitHub Pages
+        run: |
+          mv dist/client/subasta_frases/_next dist/client/_next
+          rmdir dist/client/subasta_frases
+          touch dist/client/.nojekyll
       - name: Preparar GitHub Pages
         uses: actions/configure-pages@v5
       - name: Empaquetar la web
