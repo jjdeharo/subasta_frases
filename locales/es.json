@@ -45,7 +45,7 @@
   "discussionTime": "Tiempo para deliberar (s)",
   "bidTime": "Tiempo de puja (s)",
   "identity": "Identificación",
-  "named": "Nombre o equipo",
+  "named": "Nombre, alias o equipo",
   "alias": "Alias libre",
   "anonymous": "Anónimo",
   "showBreakdown": "Mostrar el reparto de cada participante en los resultados",
@@ -72,8 +72,8 @@
   "joinTitle": "Entrar en una sesión",
   "sessionCode": "Código de sesión",
   "codePlaceholder": "ABC123",
-  "participantName": "Nombre o equipo",
-  "participantNamePlaceholder": "Ej.: Equipo Darwin",
+  "participantName": "Nombre, alias o equipo",
+  "participantNamePlaceholder": "Ej.: Equipo Darwin o Curie",
   "enter": "Entrar",
   "connecting": "Conectando…",
   "connectionError": "No se ha podido conectar. Revisa el código e inténtalo de nuevo.",
@@ -188,5 +188,7 @@
   "closeValuesHelp": "Cerrar los envíos y mostrar las prioridades colectivas",
   "removeParticipantHelp": "Expulsar a este participante de la sesión",
   "exportResultsHelp": "Descargar los resultados de la actividad en un archivo CSV",
-  "newActivityHelp": "Cerrar esta sesión y volver al inicio para crear otra actividad"
+  "newActivityHelp": "Cerrar esta sesión y volver al inicio para crear otra actividad",
+  "randomizeRoles": "Repartir roles al azar",
+  "randomizeRolesHelp": "Sortear de nuevo los roles entre los equipos de forma aleatoria y equilibrada"
 }

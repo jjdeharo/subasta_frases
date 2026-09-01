@@ -45,7 +45,7 @@
   "discussionTime": "Temps per deliberar (s)",
   "bidTime": "Temps de puja (s)",
   "identity": "Identificació",
-  "named": "Nom o equip",
+  "named": "Nom, àlies o equip",
   "alias": "Àlies lliure",
   "anonymous": "Anònim",
   "showBreakdown": "Mostra el repartiment de cada participant als resultats",
@@ -72,8 +72,8 @@
   "joinTitle": "Entra en una sessió",
   "sessionCode": "Codi de sessió",
   "codePlaceholder": "ABC123",
-  "participantName": "Nom o equip",
-  "participantNamePlaceholder": "Ex.: Equip Darwin",
+  "participantName": "Nom, àlies o equip",
+  "participantNamePlaceholder": "Ex.: Equip Darwin o Curie",
   "enter": "Entra",
   "connecting": "Connectant…",
   "connectionError": "No s’ha pogut connectar. Revisa el codi i torna-ho a provar.",
@@ -188,5 +188,7 @@
   "closeValuesHelp": "Tancar els enviaments i mostrar les prioritats col·lectives",
   "removeParticipantHelp": "Expulsar aquest participant de la sessió",
   "exportResultsHelp": "Baixar els resultats de l'activitat en un fitxer CSV",
-  "newActivityHelp": "Tancar aquesta sessió i tornar a l'inici per crear una altra activitat"
+  "newActivityHelp": "Tancar aquesta sessió i tornar a l'inici per crear una altra activitat",
+  "randomizeRoles": "Repartir rols a l'atzar",
+  "randomizeRolesHelp": "Tornar a sortejar els rols entre els equips de manera aleatòria i equilibrada"
 }

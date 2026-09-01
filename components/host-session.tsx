@@ -4,7 +4,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import type { DataConnection, Peer } from 'peerjs';
 import QRCode from 'qrcode';
 import Image from 'next/image';
-import { ArrowLeft, CheckCircle2, Clock3, Copy, Download, Gavel, Play, Radio, Square, Trophy, UserRoundX, Users } from 'lucide-react';
+import { ArrowLeft, CheckCircle2, Clock3, Copy, Download, Gavel, Play, Radio, Shuffle, Square, Trophy, UserRoundX, Users } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
@@ -99,12 +99,7 @@ export function HostSession({ config, lang, onExit }: Props) {
         let suffix = 2;
         const names = new Set([...stateRef.current.participants.values()].map((entry) => entry.name.toLocaleLowerCase()));
         while (names.has(name.toLocaleLowerCase())) name = `${baseName} (${suffix++})`;
-        const roleId = config.mode === 'roles' ? config.roles.reduce<RoleDefinition | null>((selected, role) => {
-          if (!selected) return role;
-          const uses = [...stateRef.current.participants.values()].filter((entry) => entry.roleId === role.id).length;
-          const selectedUses = [...stateRef.current.participants.values()].filter((entry) => entry.roleId === selected.id).length;
-          return uses < selectedUses ? role : selected;
-        }, null)?.id ?? null : null;
+        const roleId = config.mode === 'roles' ? pickBalancedRandomRole(config.roles, [...stateRef.current.participants.values()]) : null;
         participant = { id: message.token, token: message.token, name, online: true, balance: config.budget, score: 0, submitted: false, roleId, allocation: {} };
         stateRef.current.participants.set(participant.id, participant);
       } else { participant.online = true; }
@@ -176,6 +171,15 @@ export function HostSession({ config, lang, onExit }: Props) {
   function finish() { stateRef.current.status = 'finished'; stateRef.current.values.open = false; publish(); }
   function removeParticipant(id: string) { connections.current.get(id)?.close(); connections.current.delete(id); stateRef.current.participants.delete(id); publish(); }
   function setParticipantRole(id: string, roleId: string) { const participant = stateRef.current.participants.get(id); if (participant) { participant.roleId = roleId || null; publish(); } }
+  function randomizeRoles() {
+    const participants = [...stateRef.current.participants.values()];
+    for (let index = participants.length - 1; index > 0; index -= 1) {
+      const target = Math.floor(Math.random() * (index + 1));
+      [participants[index], participants[target]] = [participants[target], participants[index]];
+    }
+    participants.forEach((participant, index) => { participant.roleId = config.roles[index % config.roles.length]?.id ?? null; });
+    publish();
+  }
   async function copyLink() { await navigator.clipboard.writeText(sessionUrl(code, lang)); setCopied(true); window.setTimeout(() => setCopied(false), 1600); }
   function exportCsv() {
     const rows = config.mode !== 'values'
@@ -206,6 +210,7 @@ export function HostSession({ config, lang, onExit }: Props) {
         </CardContent></Card>
         <Card className="shadow-sm"><CardHeader><CardTitle className="flex items-center gap-2"><Users />{t('waitingRoom')} <span className="rounded-full bg-secondary px-2 py-0.5 text-sm">{snapshot.participants.length}</span></CardTitle></CardHeader><CardContent>
           <ParticipantList participants={snapshot.participants} roles={config.mode === 'roles' ? config.roles : undefined} t={t} onRemove={removeParticipant} onRoleChange={setParticipantRole} />
+          {config.mode === 'roles' && <Button className="mt-4 w-full" variant="outline" title={t('randomizeRolesHelp')} onClick={randomizeRoles}><Shuffle />{t('randomizeRoles')}</Button>}
           <Button size="lg" className="mt-6 w-full" title={t('startActivityHelp')} disabled={!code || snapshot.participants.length === 0} onClick={startActivity}><Play />{t('startActivity')}</Button>
         </CardContent></Card>
       </div>}
@@ -232,6 +237,14 @@ export function HostSession({ config, lang, onExit }: Props) {
       {snapshot.status === 'finished' && <Results config={config} snapshot={snapshot} t={t} onExport={exportCsv} onExit={onExit} />}
     </div>
   );
+}
+
+function pickBalancedRandomRole(roles: RoleDefinition[], participants: ParticipantRecord[]) {
+  if (!roles.length) return null;
+  const counts = new Map(roles.map((role) => [role.id, participants.filter((participant) => participant.roleId === role.id).length]));
+  const minimum = Math.min(...counts.values());
+  const candidates = roles.filter((role) => counts.get(role.id) === minimum);
+  return candidates[Math.floor(Math.random() * candidates.length)]?.id ?? null;
 }
 
 function makeSnapshot(config: ActivityConfig, state: InternalState): ClientSnapshot {

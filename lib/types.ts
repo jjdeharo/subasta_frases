@@ -1,6 +1,6 @@
 export type Lang = 'es' | 'ca';
 export type Mode = 'knowledge' | 'values' | 'roles';
-export type IdentityMode = 'named' | 'alias' | 'anonymous';
+export type IdentityMode = 'named' | 'anonymous';
 export type Screen = 'home' | 'editor' | 'join' | 'host' | 'participant';
 
 export interface PhraseItem {
@@ -126,6 +126,7 @@ export function normalizeConfig(value: ActivityConfig): ActivityConfig {
     ...fallback,
     ...value,
     roles,
+    identity: (value.identity as string) === 'anonymous' ? 'anonymous' : 'named',
     correctRolePoints: Math.max(0, Number(value.correctRolePoints ?? 1)),
     wrongRolePoints: Math.max(0, Number(value.wrongRolePoints ?? 1)),
     items: value.items.map((item) => ({ ...item, correct: item.correct ?? true, explanation: item.explanation || '', category: item.category || '', roleId: item.roleId && roles.some((role) => role.id === item.roleId) ? item.roleId : roles[0].id })),
