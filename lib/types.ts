@@ -32,6 +32,7 @@ export interface ActivityConfig {
   bidSeconds: number;
   identity: IdentityMode;
   showIndividualResults: boolean;
+  revealAnswers: boolean;
   roles: RoleDefinition[];
   correctRolePoints: number;
   wrongRolePoints: number;
@@ -106,6 +107,7 @@ export const defaultConfig = (): ActivityConfig => {
   bidSeconds: 25,
   identity: 'named',
   showIndividualResults: false,
+  revealAnswers: true,
   roles,
   correctRolePoints: 1,
   wrongRolePoints: 1,
@@ -127,6 +129,7 @@ export function normalizeConfig(value: ActivityConfig): ActivityConfig {
     ...value,
     roles,
     identity: (value.identity as string) === 'anonymous' ? 'anonymous' : 'named',
+    revealAnswers: value.revealAnswers !== false,
     correctRolePoints: Math.max(0, Number(value.correctRolePoints ?? 1)),
     wrongRolePoints: Math.max(0, Number(value.wrongRolePoints ?? 1)),
     items: value.items.map((item) => ({ ...item, correct: item.correct ?? true, explanation: item.explanation || '', category: item.category || '', roleId: item.roleId && roles.some((role) => role.id === item.roleId) ? item.roleId : roles[0].id })),

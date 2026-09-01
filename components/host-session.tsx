@@ -30,6 +30,7 @@ export function HostSession({ config, lang, onExit }: Props) {
   const [qr, setQr] = useState('');
   const [copied, setCopied] = useState(false);
   const [error, setError] = useState('');
+  const [confirmEnd, setConfirmEnd] = useState(false);
   const peerRef = useRef<Peer | null>(null);
   const connections = useRef(new Map<string, DataConnection>());
   const timerRef = useRef<number | null>(null);
@@ -113,7 +114,8 @@ export function HostSession({ config, lang, onExit }: Props) {
       const auction = stateRef.current.knowledge;
       const minimum = auction.currentBid === 0 ? config.minBid : auction.currentBid + config.increment;
       const amount = Math.floor(Number(message.amount));
-      if (Number.isFinite(amount) && amount >= minimum && amount <= participant.balance && auction.leaderId !== participant.id) {
+      const timeUp = config.bidSeconds > 0 && auction.secondsLeft === 0;
+      if (!timeUp && Number.isFinite(amount) && amount >= minimum && amount <= participant.balance && auction.leaderId !== participant.id) {
         auction.currentBid = amount; auction.leaderId = participant.id;
         if (auction.secondsLeft > 0 && auction.secondsLeft < 5) auction.secondsLeft = 5;
         publish();
@@ -127,14 +129,17 @@ export function HostSession({ config, lang, onExit }: Props) {
     }
   }
 
-  function runTimer(seconds: number) {
+  function runTimer(seconds: number, onEnd?: () => void) {
     if (timerRef.current) window.clearInterval(timerRef.current);
     stateRef.current.knowledge.secondsLeft = seconds; publish();
     if (seconds <= 0) return;
     timerRef.current = window.setInterval(() => {
       stateRef.current.knowledge.secondsLeft = Math.max(0, stateRef.current.knowledge.secondsLeft - 1);
       publish();
-      if (stateRef.current.knowledge.secondsLeft === 0 && timerRef.current) { window.clearInterval(timerRef.current); timerRef.current = null; }
+      if (stateRef.current.knowledge.secondsLeft === 0 && timerRef.current) {
+        window.clearInterval(timerRef.current); timerRef.current = null;
+        onEnd?.();
+      }
     }, 1000);
   }
 
@@ -145,7 +150,7 @@ export function HostSession({ config, lang, onExit }: Props) {
   }
   function startLot(index = 0) {
     Object.assign(stateRef.current.knowledge, { index, phase: 'discussion', currentBid: 0, leaderId: null });
-    runTimer(config.discussionSeconds);
+    runTimer(config.discussionSeconds, () => { if (stateRef.current.knowledge.phase === 'discussion') openBidding(); });
   }
   function openBidding() {
     stateRef.current.knowledge.phase = 'bidding'; stateRef.current.knowledge.currentBid = 0; stateRef.current.knowledge.leaderId = null;
@@ -168,7 +173,12 @@ export function HostSession({ config, lang, onExit }: Props) {
     const next = stateRef.current.knowledge.index + 1;
     if (next >= config.items.length) finish(); else startLot(next);
   }
-  function finish() { stateRef.current.status = 'finished'; stateRef.current.values.open = false; publish(); }
+  function finish() {
+    if (timerRef.current) { window.clearInterval(timerRef.current); timerRef.current = null; }
+    stateRef.current.knowledge.secondsLeft = 0;
+    stateRef.current.status = 'finished'; stateRef.current.values.open = false; publish();
+  }
+  function endEarly() { setConfirmEnd(false); finish(); }
   function removeParticipant(id: string) { connections.current.get(id)?.close(); connections.current.delete(id); stateRef.current.participants.delete(id); publish(); }
   function setParticipantRole(id: string, roleId: string) { const participant = stateRef.current.participants.get(id); if (participant) { participant.roleId = roleId || null; publish(); } }
   function randomizeRoles() {
@@ -223,10 +233,16 @@ export function HostSession({ config, lang, onExit }: Props) {
             {(auction.phase === 'discussion' || auction.phase === 'bidding') && <div className="grid gap-4 sm:grid-cols-2"><Card><CardContent className="flex items-center gap-4"><Clock3 className="size-8 text-primary"/><div><p className="text-sm text-muted-foreground">{auction.secondsLeft ? t('timeLeft', { seconds: auction.secondsLeft }) : t('timerFinished')}</p><Progress className="mt-2 w-44" value={auction.phase === 'discussion' ? auction.secondsLeft / Math.max(1, config.discussionSeconds) * 100 : auction.secondsLeft / Math.max(1, config.bidSeconds) * 100} /></div></CardContent></Card><Card><CardContent><p className="text-sm text-muted-foreground">{t('currentBid')}</p><p className="mt-1 text-3xl font-black">{auction.currentBid || '—'} <span className="text-base font-semibold text-muted-foreground">{config.currencyName}</span></p><p className="text-sm font-medium">{auction.leaderName ? t('leader', { name: auction.leaderName }) : t('noBids')}</p></CardContent></Card></div>}
             {auction.phase === 'discussion' && <Button size="lg" className="w-full" title={t('startBiddingHelp')} onClick={openBidding}><Radio />{t('startBidding')}</Button>}
             {auction.phase === 'bidding' && <Button size="lg" className="w-full" title={t('closeBiddingHelp')} onClick={closeBidding}><Square />{t('closeBidding')}</Button>}
-            {auction.phase === 'revealed' && (config.mode === 'roles' ? <RoleResolution config={config} item={item} auction={auction} t={t}><Button className="mt-5" size="lg" title={t(auction.index === config.items.length - 1 ? 'showResultsHelp' : 'nextPhraseHelp')} onClick={nextLot}>{auction.index === config.items.length - 1 ? <Trophy /> : <Gavel />}{auction.index === config.items.length - 1 ? t('showFinalResults') : t('nextPhrase')}</Button></RoleResolution> : <Card className={item.correct ? 'bg-emerald-50 ring-emerald-700/20' : 'bg-rose-50 ring-rose-700/20'}><CardContent><h2 className={`text-2xl font-black ${item.correct ? 'text-emerald-800' : 'text-rose-800'}`}>{item.correct ? t('answerCorrect') : t('answerIncorrect')}</h2>{item.explanation && <p className="mt-3 text-lg leading-7">{item.explanation}</p>}<p className="mt-4 font-semibold">{auction.leaderName ? `${t('soldTo', { name: auction.leaderName, amount: auction.currentBid })} ${config.currencyName}` : t('unsold')}</p><Button className="mt-5" size="lg" title={t(auction.index === config.items.length - 1 ? 'showResultsHelp' : 'nextPhraseHelp')} onClick={nextLot}>{auction.index === config.items.length - 1 ? <Trophy /> : <Gavel />}{auction.index === config.items.length - 1 ? t('showFinalResults') : t('nextPhrase')}</Button></CardContent></Card>)}
+            {auction.phase === 'revealed' && (config.mode === 'roles' ? <RoleResolution config={config} item={item} auction={auction} t={t}><Button className="mt-5" size="lg" title={t(auction.index === config.items.length - 1 ? 'showResultsHelp' : 'nextPhraseHelp')} onClick={nextLot}>{auction.index === config.items.length - 1 ? <Trophy /> : <Gavel />}{auction.index === config.items.length - 1 ? t('showFinalResults') : t('nextPhrase')}</Button></RoleResolution> : <Card className={item.correct ? 'bg-emerald-50 ring-emerald-700/20' : 'bg-rose-50 ring-rose-700/20'}><CardContent><h2 className={`text-2xl font-black ${item.correct ? 'text-emerald-800' : 'text-rose-800'}`}>{item.correct ? t('answerCorrect') : t('answerIncorrect')}</h2>{item.explanation && <p className="mt-3 text-lg leading-7">{item.explanation}</p>}<p className="mt-4 font-semibold">{auction.leaderName ? `${t('soldTo', { name: auction.leaderName, amount: auction.currentBid })} ${config.currencyName}` : t('unsold')}</p>{!config.revealAnswers && <p className="mt-2 text-sm font-semibold text-muted-foreground">{t('answersHiddenNotice')}</p>}<Button className="mt-5" size="lg" title={t(auction.index === config.items.length - 1 ? 'showResultsHelp' : 'nextPhraseHelp')} onClick={nextLot}>{auction.index === config.items.length - 1 ? <Trophy /> : <Gavel />}{auction.index === config.items.length - 1 ? t('showFinalResults') : t('nextPhrase')}</Button></CardContent></Card>)}
           </>}
         </div>
-        <Card className="h-fit shadow-sm xl:sticky xl:top-5"><CardHeader><CardTitle>{t('rankings')}</CardTitle></CardHeader><CardContent><Ranking participants={sorted} currency={config.currencyName} roles={config.mode === 'roles' ? config.roles : undefined} t={t} /></CardContent></Card>
+        <Card className="h-fit shadow-sm xl:sticky xl:top-5"><CardHeader><CardTitle>{t('rankings')}</CardTitle></CardHeader><CardContent>
+          <Ranking participants={sorted} currency={config.currencyName} roles={config.mode === 'roles' ? config.roles : undefined} t={t} />
+          <p className="mt-5 text-sm text-muted-foreground">{t('auctionedCount', { done: auction.lots.length, total: config.items.length })}</p>
+          {confirmEnd
+            ? <div className="mt-3 rounded-xl border border-destructive/40 bg-destructive/5 p-3"><p className="text-sm font-semibold">{t('endNowConfirm', { pending: config.items.length - auction.lots.length })}</p><div className="mt-3 grid grid-cols-2 gap-2"><Button variant="destructive" title={t('endNowHelp')} onClick={endEarly}><Trophy />{t('endNowYes')}</Button><Button variant="outline" onClick={() => setConfirmEnd(false)}>{t('cancel')}</Button></div></div>
+            : <Button variant="outline" className="mt-3 w-full" title={t('endNowHelp')} onClick={() => setConfirmEnd(true)}><Trophy />{t('endNow')}</Button>}
+        </CardContent></Card>
       </div>}
 
       {snapshot.status === 'running' && config.mode === 'values' && <div className="grid gap-6 lg:grid-cols-[1fr_340px]">
@@ -249,12 +265,14 @@ function pickBalancedRandomRole(roles: RoleDefinition[], participants: Participa
 
 function makeSnapshot(config: ActivityConfig, state: InternalState): ClientSnapshot {
   const revealCurrent = state.status === 'finished' || state.knowledge.phase === 'revealed';
-  const items = config.items.map((item, index) => ({ id: item.id, text: item.text, category: item.category, ...(revealCurrent && index === state.knowledge.index || state.status === 'finished' ? { correct: config.mode === 'knowledge' ? item.correct : undefined, roleId: config.mode === 'roles' ? item.roleId : undefined, explanation: item.explanation } : {}) }));
+  const hideAnswers = config.mode === 'knowledge' && !config.revealAnswers;
+  const items = config.items.map((item, index) => ({ id: item.id, text: item.text, category: item.category, ...(!hideAnswers && (revealCurrent && index === state.knowledge.index || state.status === 'finished') ? { correct: config.mode === 'knowledge' ? item.correct : undefined, roleId: config.mode === 'roles' ? item.roleId : undefined, explanation: item.explanation } : {}) }));
   const participants = [...state.participants.values()].map(({ id, name, online, balance, score, submitted, roleId }) => ({ id, name, online, balance, score, submitted, roleId }));
   const leader = state.knowledge.leaderId ? state.participants.get(state.knowledge.leaderId) : null;
   const totals = state.status === 'finished' && config.mode === 'values' ? Object.fromEntries(config.items.map((item) => [item.id, [...state.participants.values()].reduce((sum, participant) => sum + (participant.allocation[item.id] || 0), 0)])) : null;
   const allocations = state.status === 'finished' && config.mode === 'values' && config.showIndividualResults ? Object.fromEntries([...state.participants.values()].map((participant) => [participant.name, participant.allocation])) : null;
-  return { revision: state.revision, status: state.status, config: { ...config, items }, participants, knowledge: config.mode !== 'values' ? { ...state.knowledge, leaderName: leader?.name ?? null } : undefined, values: config.mode === 'values' ? { open: state.values.open, totals, allocations } : undefined };
+  const lots = hideAnswers ? state.knowledge.lots.map(({ correct: _correct, ...lot }) => lot) : state.knowledge.lots;
+  return { revision: state.revision, status: state.status, config: { ...config, items }, participants, knowledge: config.mode !== 'values' ? { ...state.knowledge, lots, leaderName: leader?.name ?? null } : undefined, values: config.mode === 'values' ? { open: state.values.open, totals, allocations } : undefined };
 }
 
 function ParticipantList({ participants, roles, t, onRemove, onRoleChange }: { participants: ParticipantPublic[]; roles?: RoleDefinition[]; t: (key: TranslationKey, replacements?: Record<string, string | number>) => string; onRemove: (id: string) => void; onRoleChange?: (id: string, roleId: string) => void }) {
@@ -273,10 +291,10 @@ function RoleResolution({ config, item, auction, t, children }: { config: Activi
   return <Card className={auction.leaderId ? (matched ? 'bg-emerald-50 ring-emerald-700/20' : 'bg-rose-50 ring-rose-700/20') : 'bg-stone-50'}><CardContent><h2 className="text-2xl font-black">{t('phraseBelongsTo', { role: role?.name ?? t('unassignedRole') })}</h2><div className="mt-3 flex flex-wrap gap-2"><RoleBadge role={role}/>{winner && <span className="text-sm text-muted-foreground">{auction.leaderName}: <RoleBadge role={winner}/></span>}</div>{item.explanation && <p className="mt-3 text-lg leading-7">{item.explanation}</p>}<p className={`mt-4 font-bold ${auction.leaderId ? (matched ? 'text-emerald-800' : 'text-rose-800') : ''}`}>{auction.leaderId ? t(matched ? 'roleMatch' : 'roleMismatch', { points: matched ? config.correctRolePoints : config.wrongRolePoints }) : t('roleUnsold')}</p><p className="mt-2 font-semibold">{auction.leaderName ? `${t('soldTo', { name: auction.leaderName, amount: auction.currentBid })} ${config.currencyName}` : t('unsold')}</p>{children}</CardContent></Card>;
 }
 
-function Results({ config, snapshot, t, onExport, onExit }: { config: ActivityConfig; snapshot: ClientSnapshot; t: (key: TranslationKey) => string; onExport: () => void; onExit: () => void }) {
+function Results({ config, snapshot, t, onExport, onExit }: { config: ActivityConfig; snapshot: ClientSnapshot; t: (key: TranslationKey, replacements?: Record<string, string | number>) => string; onExport: () => void; onExit: () => void }) {
   const sorted = [...snapshot.participants].sort((a, b) => b.score - a.score || b.balance - a.balance);
   const valueRows = config.items.map((item) => ({ ...item, total: snapshot.values?.totals?.[item.id] ?? 0 })).sort((a, b) => b.total - a.total);
   const max = Math.max(1, ...valueRows.map((row) => row.total));
   const roleTotals = config.roles.map((role) => ({ role, score: snapshot.participants.filter((participant) => participant.roleId === role.id).reduce((sum, participant) => sum + participant.score, 0) })).sort((a, b) => b.score - a.score);
-  return <div className="mx-auto max-w-4xl"><div className="mb-8 text-center"><Trophy className="mx-auto size-14 text-amber-600"/><h1 className="mt-3 text-4xl font-black">{config.mode !== 'values' ? t('rankings') : t('collectiveResult')}</h1></div><Card className="shadow-sm"><CardContent>{config.mode !== 'values' ? <Ranking participants={sorted} currency={config.currencyName} roles={config.mode === 'roles' ? config.roles : undefined} t={t} /> : <div className="space-y-5">{valueRows.length ? valueRows.map((row, index) => <div key={row.id}><div className="mb-2 flex gap-3"><span className="font-black text-primary">{index + 1}</span><span className="flex-1 font-semibold">{row.text}</span><strong>{row.total} {config.currencyName}</strong></div><Progress value={row.total / max * 100} /></div>) : <p>{t('noAllocations')}</p>}</div>}</CardContent></Card>{config.mode === 'roles' && <Card className="mt-6 shadow-sm"><CardHeader><CardTitle>{t('roleResults')}</CardTitle></CardHeader><CardContent className="grid gap-3 sm:grid-cols-2">{roleTotals.map(({ role, score }) => <div key={role.id} className="flex items-center justify-between rounded-xl border bg-white p-4"><RoleBadge role={role}/><strong>{score} {t('points').toLowerCase()}</strong></div>)}</CardContent></Card>}{snapshot.values?.allocations && <Card className="mt-6 shadow-sm"><CardHeader><CardTitle>{t('individualBreakdown')}</CardTitle></CardHeader><CardContent className="space-y-4">{Object.entries(snapshot.values.allocations).map(([name, allocation]) => <div key={name} className="rounded-xl border bg-white p-4"><h3 className="font-black">{name}</h3><ul className="mt-2 space-y-1 text-sm">{config.items.filter((item) => (allocation[item.id] || 0) > 0).map((item) => <li key={item.id} className="flex gap-3"><span className="flex-1">{item.text}</span><strong>{allocation[item.id]} {config.currencyName}</strong></li>)}</ul></div>)}</CardContent></Card>}<div className="mt-6 flex justify-center gap-3"><Button variant="outline" title={t('exportResultsHelp')} onClick={onExport}><Download />{t('exportCsv')}</Button><Button title={t('newActivityHelp')} onClick={onExit}>{t('newActivity')}</Button></div></div>;
+  return <div className="mx-auto max-w-4xl"><div className="mb-8 text-center"><Trophy className="mx-auto size-14 text-amber-600"/><h1 className="mt-3 text-4xl font-black">{config.mode !== 'values' ? t('rankings') : t('collectiveResult')}</h1>{config.mode !== 'values' && <p className="mt-2 text-muted-foreground">{t('auctionedCount', { done: snapshot.knowledge?.lots.length ?? 0, total: config.items.length })}</p>}</div><Card className="shadow-sm"><CardContent>{config.mode !== 'values' ? <Ranking participants={sorted} currency={config.currencyName} roles={config.mode === 'roles' ? config.roles : undefined} t={t} /> : <div className="space-y-5">{valueRows.length ? valueRows.map((row, index) => <div key={row.id}><div className="mb-2 flex gap-3"><span className="font-black text-primary">{index + 1}</span><span className="flex-1 font-semibold">{row.text}</span><strong>{row.total} {config.currencyName}</strong></div><Progress value={row.total / max * 100} /></div>) : <p>{t('noAllocations')}</p>}</div>}</CardContent></Card>{config.mode === 'roles' && <Card className="mt-6 shadow-sm"><CardHeader><CardTitle>{t('roleResults')}</CardTitle></CardHeader><CardContent className="grid gap-3 sm:grid-cols-2">{roleTotals.map(({ role, score }) => <div key={role.id} className="flex items-center justify-between rounded-xl border bg-white p-4"><RoleBadge role={role}/><strong>{score} {t('points').toLowerCase()}</strong></div>)}</CardContent></Card>}{snapshot.values?.allocations && <Card className="mt-6 shadow-sm"><CardHeader><CardTitle>{t('individualBreakdown')}</CardTitle></CardHeader><CardContent className="space-y-4">{Object.entries(snapshot.values.allocations).map(([name, allocation]) => <div key={name} className="rounded-xl border bg-white p-4"><h3 className="font-black">{name}</h3><ul className="mt-2 space-y-1 text-sm">{config.items.filter((item) => (allocation[item.id] || 0) > 0).map((item) => <li key={item.id} className="flex gap-3"><span className="flex-1">{item.text}</span><strong>{allocation[item.id]} {config.currencyName}</strong></li>)}</ul></div>)}</CardContent></Card>}<div className="mt-6 flex justify-center gap-3"><Button variant="outline" title={t('exportResultsHelp')} onClick={onExport}><Download />{t('exportCsv')}</Button><Button title={t('newActivityHelp')} onClick={onExit}>{t('newActivity')}</Button></div></div>;
 }
