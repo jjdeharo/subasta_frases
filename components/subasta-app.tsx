@@ -69,6 +69,7 @@ export default function SubastaApp() {
     {screen === 'join' && <JoinForm lang={lang} initialCode={joinCode} onBack={exitToHome} onJoin={(code, name) => { setParticipant({ code, name }); setScreen('participant'); }} />}
     {screen === 'host' && hostConfig && <HostSession config={hostConfig} lang={lang} onExit={exitToHome} />}
     {screen === 'participant' && participant && <ParticipantSession code={participant.code} name={participant.name} lang={lang} onExit={exitToHome} />}
+    <Footer t={t} />
   </main>;
 }
 
@@ -79,6 +80,14 @@ function AppearanceControls({ lang, theme, onLanguageChange, onThemeChange, t }:
     <span className="h-6 w-px bg-border" />
     <label className="flex items-center gap-2 rounded-xl px-2 py-1.5" title={t('appearance')}><ThemeIcon className="size-4 text-muted-foreground"/><span className="sr-only">{t('appearance')}</span><select aria-label={t('appearance')} className="bg-transparent font-semibold outline-none" value={theme} onChange={(event) => onThemeChange(event.target.value as ThemePreference)}><option value="system">{t('themeSystem')}</option><option value="light">{t('themeLight')}</option><option value="dark">{t('themeDark')}</option></select></label>
   </div>;
+}
+
+function Footer({ t }: { t: (key: TranslationKey) => string }) {
+  return <footer className="mx-auto w-full max-w-6xl px-5 pb-24 pt-8 text-center text-xs leading-6 text-muted-foreground sm:px-8">
+    <span>{t('footerCode')}:</span>{' '}<a href="https://www.gnu.org/licenses/agpl-3.0.html" target="_blank" rel="noopener noreferrer license" className="font-semibold underline underline-offset-4 hover:text-foreground">AGPL v3</a>
+    <span aria-hidden="true"> · </span>
+    <span>{t('footerContent')}:</span>{' '}<a href="https://creativecommons.org/licenses/by-sa/4.0/" target="_blank" rel="noopener noreferrer license" className="font-semibold underline underline-offset-4 hover:text-foreground">CC BY-SA 4.0</a>
+  </footer>;
 }
 
 function Landing({ t, onCreate, onJoin }: { t: (key: TranslationKey) => string; onCreate: () => void; onJoin: () => void }) {

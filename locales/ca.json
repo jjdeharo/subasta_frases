@@ -153,5 +153,7 @@
   "themeLight": "Clar",
   "themeDark": "Fosc",
   "close": "Tanca",
-  "higherBidHelp": "Puja dos increments addicionals"
+  "higherBidHelp": "Puja dos increments addicionals",
+  "footerCode": "Codi",
+  "footerContent": "Continguts"
 }

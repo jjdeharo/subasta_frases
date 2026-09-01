@@ -153,5 +153,7 @@
   "themeLight": "Claro",
   "themeDark": "Oscuro",
   "close": "Cerrar",
-  "higherBidHelp": "Pujar dos incrementos adicionales"
+  "higherBidHelp": "Pujar dos incrementos adicionales",
+  "footerCode": "Código",
+  "footerContent": "Contenidos"
 }
