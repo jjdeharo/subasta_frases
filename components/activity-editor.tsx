@@ -1,14 +1,14 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
-import { ArrowDown, ArrowLeft, ArrowUp, Check, Copy, Gavel, HeartHandshake, Link2, ListPlus, Play, Plus, Trash2, X } from 'lucide-react';
+import { ArrowDown, ArrowLeft, ArrowUp, Check, Copy, Gavel, HeartHandshake, Link2, ListPlus, Play, Plus, Tags, Trash2, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { createPreparedUrl } from '@/lib/share';
 import { translate, type TranslationKey } from '@/lib/i18n';
-import { defaultConfig, uid, type ActivityConfig, type Lang, type PhraseItem } from '@/lib/types';
+import { defaultConfig, normalizeConfig, uid, type ActivityConfig, type Lang, type PhraseItem, type RoleDefinition } from '@/lib/types';
 
 interface Props {
   lang: Lang;
@@ -19,12 +19,16 @@ interface Props {
 
 export function ActivityEditor({ lang, initial, onBack, onStart }: Props) {
   const t = (key: TranslationKey, replacements?: Record<string, string | number>) => translate(lang, key, replacements);
-  const [config, setConfig] = useState<ActivityConfig>(() => initial ? { ...initial, currencyName: initial.currencyName || (lang === 'ca' ? 'crèdits' : 'créditos') } : { ...defaultConfig(), currencyName: lang === 'ca' ? 'crèdits' : 'créditos' });
+  const [config, setConfig] = useState<ActivityConfig>(() => initial ? normalizeConfig({ ...initial, currencyName: initial.currencyName || (lang === 'ca' ? 'crèdits' : 'créditos') }) : { ...defaultConfig(), currencyName: lang === 'ca' ? 'crèdits' : 'créditos' });
   const [bulkOpen, setBulkOpen] = useState(false);
   const [bulk, setBulk] = useState('');
   const [preparedUrl, setPreparedUrl] = useState('');
   const [copied, setCopied] = useState(false);
-  const valid = useMemo(() => config.title.trim().length > 0 && config.items.filter((item) => item.text.trim()).length >= 2, [config]);
+  const valid = useMemo(() => {
+    const basic = config.title.trim().length > 0 && config.items.filter((item) => item.text.trim()).length >= 2;
+    const validRoles = config.roles.filter((role) => role.name.trim()).length >= 2 && config.items.every((item) => !item.text.trim() || config.roles.some((role) => role.id === item.roleId));
+    return basic && (config.mode !== 'roles' || validRoles);
+  }, [config]);
 
   useEffect(() => {
     const timer = window.setTimeout(() => localStorage.setItem('subasta-draft', JSON.stringify(config)), 250);
@@ -35,8 +39,18 @@ export function ActivityEditor({ lang, initial, onBack, onStart }: Props) {
   function patchItem(id: string, next: Partial<PhraseItem>) {
     patch({ items: config.items.map((item) => item.id === id ? { ...item, ...next } : item) });
   }
+  function patchRole(id: string, next: Partial<RoleDefinition>) { patch({ roles: config.roles.map((role) => role.id === id ? { ...role, ...next } : role) }); }
+  function addRole() {
+    const colors = ['#2563eb', '#059669', '#d97706', '#9333ea', '#dc2626', '#0891b2', '#db2777'];
+    patch({ roles: [...config.roles, { id: uid(), name: `${t('role')} ${config.roles.length + 1}`, description: '', color: colors[config.roles.length % colors.length] }] });
+  }
+  function removeRole(id: string) {
+    if (config.roles.length <= 2) return;
+    const roles = config.roles.filter((role) => role.id !== id);
+    patch({ roles, items: config.items.map((item) => item.roleId === id ? { ...item, roleId: roles[0].id } : item) });
+  }
   function addItem(after?: number) {
-    const item: PhraseItem = { id: uid(), text: '', correct: true, explanation: '', category: '' };
+    const item: PhraseItem = { id: uid(), text: '', correct: true, explanation: '', category: '', roleId: config.roles[0]?.id || '' };
     const items = [...config.items]; items.splice(after === undefined ? items.length : after + 1, 0, item); patch({ items });
   }
   function duplicateItem(index: number) {
@@ -48,7 +62,7 @@ export function ActivityEditor({ lang, initial, onBack, onStart }: Props) {
     const items = [...config.items]; [items[index], items[target]] = [items[target], items[index]]; patch({ items });
   }
   function addBulk() {
-    const items = bulk.split(/\r?\n/).map((text) => text.trim()).filter(Boolean).map((text) => ({ id: uid(), text, correct: true, explanation: '', category: '' }));
+    const items = bulk.split(/\r?\n/).map((text) => text.trim()).filter(Boolean).map((text) => ({ id: uid(), text, correct: true, explanation: '', category: '', roleId: config.roles[0]?.id || '' }));
     if (items.length) patch({ items: [...config.items.filter((item) => item.text.trim()), ...items] });
     setBulk(''); setBulkOpen(false);
   }
@@ -76,15 +90,29 @@ export function ActivityEditor({ lang, initial, onBack, onStart }: Props) {
         <div className="space-y-6">
           <Card className="shadow-sm">
             <CardHeader><CardTitle>{t('activityType')}</CardTitle></CardHeader>
-            <CardContent className="grid gap-3 sm:grid-cols-2">
-              {(['knowledge', 'values'] as const).map((mode) => (
+            <CardContent className="grid gap-3 sm:grid-cols-3">
+              {(['knowledge', 'values', 'roles'] as const).map((mode) => (
                 <button key={mode} type="button" onClick={() => patch({ mode })} className={`flex gap-4 rounded-2xl border p-4 text-left transition ${config.mode === mode ? 'border-primary bg-primary/5 ring-2 ring-primary/15' : 'bg-white hover:border-primary/40'}`}>
-                  <span className={`grid size-10 shrink-0 place-items-center rounded-xl ${mode === 'knowledge' ? 'bg-amber-100 text-amber-800' : 'bg-emerald-100 text-emerald-800'}`}>{mode === 'knowledge' ? <Gavel /> : <HeartHandshake />}</span>
+                  <span className={`grid size-10 shrink-0 place-items-center rounded-xl ${mode === 'knowledge' ? 'bg-amber-100 text-amber-800' : mode === 'values' ? 'bg-emerald-100 text-emerald-800' : 'bg-violet-100 text-violet-800'}`}>{mode === 'knowledge' ? <Gavel /> : mode === 'values' ? <HeartHandshake /> : <Tags />}</span>
                   <span><strong className="block">{t(mode)}</strong><span className="mt-1 block text-sm leading-5 text-muted-foreground">{t(`${mode}Description` as TranslationKey)}</span></span>
                 </button>
               ))}
             </CardContent>
           </Card>
+
+          {config.mode === 'roles' && <Card className="shadow-sm">
+            <CardHeader><CardTitle>{t('roleDefinitions')}</CardTitle></CardHeader>
+            <CardContent className="space-y-3">
+              <p className="text-sm leading-6 text-muted-foreground">{t('roleDefinitionsHelp')}</p>
+              {config.roles.map((role, index) => <div key={role.id} className="grid gap-3 rounded-xl border bg-white p-3 sm:grid-cols-[44px_1fr_1.4fr_auto] sm:items-center">
+                <input type="color" className="h-10 w-11 cursor-pointer rounded-lg border bg-white p-1" aria-label={t('roleColor')} value={role.color} onChange={(event) => patchRole(role.id, { color: event.target.value })}/>
+                <Input value={role.name} placeholder={`${t('role')} ${index + 1}`} onChange={(event) => patchRole(role.id, { name: event.target.value })}/>
+                <Input value={role.description} placeholder={t('roleDescriptionPlaceholder')} onChange={(event) => patchRole(role.id, { description: event.target.value })}/>
+                <Button size="icon-sm" variant="ghost" aria-label={t('delete')} disabled={config.roles.length <= 2} onClick={() => removeRole(role.id)}><Trash2 /></Button>
+              </div>)}
+              <Button className="w-full border-dashed" variant="outline" onClick={addRole}><Plus />{t('addRole')}</Button>
+            </CardContent>
+          </Card>}
 
           <Card className="shadow-sm">
             <CardContent className="space-y-5 pt-1">
@@ -115,6 +143,9 @@ export function ActivityEditor({ lang, initial, onBack, onStart }: Props) {
                         <Button type="button" variant={!item.correct ? 'default' : 'outline'} onClick={() => patchItem(item.id, { correct: false })}><X />{t('incorrect')}</Button>
                       </div>
                       <Field label={t('explanation')}><Textarea value={item.explanation} placeholder={t('explanationPlaceholder')} onChange={(event) => patchItem(item.id, { explanation: event.target.value })} /></Field>
+                    </> : config.mode === 'roles' ? <>
+                      <Field label={t('targetRole')}><select className="h-10 w-full rounded-lg border bg-white px-3" value={item.roleId} onChange={(event) => patchItem(item.id, { roleId: event.target.value })}>{config.roles.map((role) => <option key={role.id} value={role.id}>{role.name}</option>)}</select></Field>
+                      <Field label={t('explanation')}><Textarea value={item.explanation} placeholder={t('roleExplanationPlaceholder')} onChange={(event) => patchItem(item.id, { explanation: event.target.value })} /></Field>
                     </> : <Field label={t('category')}><Input value={item.category} placeholder={t('categoryPlaceholder')} onChange={(event) => patchItem(item.id, { category: event.target.value })} /></Field>}
                   </CardContent>
                 </Card>
@@ -129,10 +160,11 @@ export function ActivityEditor({ lang, initial, onBack, onStart }: Props) {
           <CardContent className="space-y-4">
             <Field label={t('currencyName')}><Input value={config.currencyName} maxLength={30} placeholder={t('currencyPlaceholder')} onChange={(event) => patch({ currencyName: event.target.value })} /></Field>
             <NumberField label={t('budget')} value={config.budget} min={10} onChange={(budget) => patch({ budget })} />
-            {config.mode === 'knowledge' && <>
+            {config.mode !== 'values' && <>
               <div className="grid grid-cols-2 gap-3"><NumberField label={t('minimumBid')} value={config.minBid} min={1} onChange={(minBid) => patch({ minBid })} /><NumberField label={t('bidIncrement')} value={config.increment} min={1} onChange={(increment) => patch({ increment })} /></div>
               <div className="grid grid-cols-2 gap-3"><NumberField label={t('discussionTime')} value={config.discussionSeconds} min={0} onChange={(discussionSeconds) => patch({ discussionSeconds })} /><NumberField label={t('bidTime')} value={config.bidSeconds} min={5} onChange={(bidSeconds) => patch({ bidSeconds })} /></div>
             </>}
+            {config.mode === 'roles' && <div className="grid grid-cols-2 gap-3"><NumberField label={t('matchPoints')} value={config.correctRolePoints} min={0} onChange={(correctRolePoints) => patch({ correctRolePoints })} /><NumberField label={t('mismatchPenalty')} value={config.wrongRolePoints} min={0} onChange={(wrongRolePoints) => patch({ wrongRolePoints })} /></div>}
             <Field label={t('identity')}><select className="h-10 w-full rounded-lg border bg-white px-3" value={config.identity} onChange={(event) => patch({ identity: event.target.value as ActivityConfig['identity'] })}><option value="named">{t('named')}</option><option value="alias">{t('alias')}</option><option value="anonymous">{t('anonymous')}</option></select></Field>
             {config.mode === 'values' && <label className="flex cursor-pointer gap-3 rounded-xl bg-muted p-3 text-sm leading-5"><input type="checkbox" className="mt-1 size-4 accent-[var(--primary)]" checked={config.showIndividualResults} onChange={(event) => patch({ showIndividualResults: event.target.checked })} /><span>{t('showBreakdown')}</span></label>}
           </CardContent>
@@ -141,7 +173,7 @@ export function ActivityEditor({ lang, initial, onBack, onStart }: Props) {
 
       <div className="fixed inset-x-0 bottom-0 z-20 border-t bg-background/92 px-5 py-4 shadow-[0_-12px_40px_rgb(60_38_20/.08)] backdrop-blur-lg">
         <div className="mx-auto flex max-w-6xl flex-col justify-end gap-3 sm:flex-row">
-          {!valid && <p className="mr-auto self-center text-sm font-medium text-destructive">{t('validationTitle')}</p>}
+          {!valid && <p className="mr-auto self-center text-sm font-medium text-destructive">{config.mode === 'roles' ? t('validationRoles') : t('validationTitle')}</p>}
           <Button size="lg" variant="outline" disabled={!valid} onClick={prepare}><Link2 />{t('prepareUrl')}</Button>
           <Button size="lg" disabled={!valid} onClick={() => onStart({ ...config, items: config.items.filter((item) => item.text.trim()) })}><Play />{t('startNow')}</Button>
         </div>

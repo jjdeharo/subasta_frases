@@ -1,5 +1,5 @@
 import { compressToEncodedURIComponent, decompressFromEncodedURIComponent } from 'lz-string';
-import type { ActivityConfig } from './types';
+import { normalizeConfig, type ActivityConfig } from './types';
 
 export function createPreparedUrl(config: ActivityConfig, lang: string) {
   const url = new URL(window.location.href);
@@ -15,7 +15,7 @@ export function readPreparedActivity(): ActivityConfig | null {
     if (!packed) return null;
     const raw = decompressFromEncodedURIComponent(packed);
     const parsed = JSON.parse(raw) as ActivityConfig;
-    return parsed?.version === 1 && Array.isArray(parsed.items) ? parsed : null;
+    return parsed?.version === 1 && Array.isArray(parsed.items) ? normalizeConfig(parsed) : null;
   } catch {
     return null;
   }

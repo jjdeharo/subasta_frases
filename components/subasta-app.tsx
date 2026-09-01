@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { ArrowLeft, BookOpenCheck, ChevronRight, Gavel, Globe2, HeartHandshake, LogIn, Users } from 'lucide-react';
+import { ArrowLeft, BookOpenCheck, ChevronRight, Gavel, Globe2, HeartHandshake, LogIn, Tags, Users } from 'lucide-react';
 import { ActivityEditor } from '@/components/activity-editor';
 import { HostSession } from '@/components/host-session';
 import { ParticipantSession } from '@/components/participant-session';
@@ -10,7 +10,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { detectLanguage, translate, type TranslationKey } from '@/lib/i18n';
 import { readPreparedActivity } from '@/lib/share';
-import type { ActivityConfig, Lang, Screen } from '@/lib/types';
+import { normalizeConfig, type ActivityConfig, type Lang, type Screen } from '@/lib/types';
 
 export default function SubastaApp() {
   const [lang, setLang] = useState<Lang>('es');
@@ -34,7 +34,7 @@ export default function SubastaApp() {
   function openEditor() {
     let draft: ActivityConfig | null = null;
     try { draft = JSON.parse(localStorage.getItem('subasta-draft') || 'null') as ActivityConfig | null; } catch { /* ignored */ }
-    setInitial(draft?.version === 1 ? draft : null); setScreen('editor');
+    setInitial(draft?.version === 1 ? normalizeConfig(draft) : null); setScreen('editor');
   }
   function exitToHome() {
     setScreen('home'); setHostConfig(null); setParticipant(null);
@@ -58,7 +58,7 @@ function LanguageSwitch({ lang, onChange, label }: { lang: Lang; onChange: (lang
 function Landing({ t, onCreate, onJoin }: { t: (key: TranslationKey) => string; onCreate: () => void; onJoin: () => void }) {
   return <div className="px-5 py-5 sm:px-8 lg:px-12"><header className="mx-auto flex max-w-6xl items-center"><div className="flex items-center gap-3 font-bold tracking-tight"><span className="grid size-10 place-items-center rounded-2xl bg-primary text-primary-foreground shadow-sm"><Gavel className="size-5"/></span><span>{t('appName')}</span></div></header>
     <section className="mx-auto grid max-w-6xl items-center gap-14 py-14 lg:grid-cols-[1.08fr_.92fr] lg:py-24"><div><p className="mb-5 inline-flex items-center gap-2 rounded-full bg-secondary px-4 py-2 text-sm font-semibold text-secondary-foreground"><Users className="size-4"/>{t('tagline')}</p><h1 className="max-w-3xl text-5xl font-black leading-[.98] tracking-[-.05em] sm:text-7xl">{t('appName')}</h1><p className="mt-7 max-w-2xl text-lg leading-8 text-muted-foreground sm:text-xl">{t('homeIntro')}</p><div className="mt-9 flex flex-col gap-3 sm:flex-row"><Button size="lg" className="h-12 rounded-xl px-5 text-base" onClick={onCreate}>{t('createActivity')}<ChevronRight/></Button><Button size="lg" variant="outline" className="h-12 rounded-xl px-5 text-base" onClick={onJoin}>{t('joinSession')}</Button></div><p className="mt-5 text-sm text-muted-foreground">{t('privacyLine')}</p></div>
-      <div className="relative grid gap-4"><div className="absolute -inset-8 -z-10 rounded-full bg-[radial-gradient(circle,var(--accent)_0%,transparent_68%)] opacity-80"/><Card className="rotate-[-1.5deg] border-0 bg-[#fff8e8] shadow-[0_24px_60px_-30px_rgb(73_43_15/.3)] ring-1 ring-amber-900/10"><CardContent className="flex gap-5 p-6"><span className="grid size-12 shrink-0 place-items-center rounded-2xl bg-amber-400/25 text-amber-800"><BookOpenCheck/></span><div><h2 className="text-xl font-bold">{t('knowledge')}</h2><p className="mt-2 leading-6 text-stone-600">{t('knowledgeDescription')}</p></div></CardContent></Card><Card className="ml-4 rotate-[1.2deg] border-0 bg-[#eefbf4] shadow-[0_24px_60px_-30px_rgb(20_83_45/.28)] ring-1 ring-emerald-900/10 sm:ml-12"><CardContent className="flex gap-5 p-6"><span className="grid size-12 shrink-0 place-items-center rounded-2xl bg-emerald-400/20 text-emerald-800"><HeartHandshake/></span><div><h2 className="text-xl font-bold">{t('values')}</h2><p className="mt-2 leading-6 text-stone-600">{t('valuesDescription')}</p></div></CardContent></Card></div></section>
+      <div className="relative grid gap-4"><div className="absolute -inset-8 -z-10 rounded-full bg-[radial-gradient(circle,var(--accent)_0%,transparent_68%)] opacity-80"/><Card className="rotate-[-1.5deg] border-0 bg-[#fff8e8] shadow-[0_24px_60px_-30px_rgb(73_43_15/.3)] ring-1 ring-amber-900/10"><CardContent className="flex gap-5 p-6"><span className="grid size-12 shrink-0 place-items-center rounded-2xl bg-amber-400/25 text-amber-800"><BookOpenCheck/></span><div><h2 className="text-xl font-bold">{t('knowledge')}</h2><p className="mt-2 leading-6 text-stone-600">{t('knowledgeDescription')}</p></div></CardContent></Card><Card className="ml-4 rotate-[1.2deg] border-0 bg-[#eefbf4] shadow-[0_24px_60px_-30px_rgb(20_83_45/.28)] ring-1 ring-emerald-900/10 sm:ml-12"><CardContent className="flex gap-5 p-6"><span className="grid size-12 shrink-0 place-items-center rounded-2xl bg-emerald-400/20 text-emerald-800"><HeartHandshake/></span><div><h2 className="text-xl font-bold">{t('values')}</h2><p className="mt-2 leading-6 text-stone-600">{t('valuesDescription')}</p></div></CardContent></Card><Card className="rotate-[-.5deg] border-0 bg-[#f3f0ff] shadow-[0_24px_60px_-30px_rgb(76_29_149/.25)] ring-1 ring-violet-900/10"><CardContent className="flex gap-5 p-6"><span className="grid size-12 shrink-0 place-items-center rounded-2xl bg-violet-400/20 text-violet-800"><Tags/></span><div><h2 className="text-xl font-bold">{t('roles')}</h2><p className="mt-2 leading-6 text-stone-600">{t('rolesDescription')}</p></div></CardContent></Card></div></section>
   </div>;
 }
 
