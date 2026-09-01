@@ -87,10 +87,10 @@ export function ActivityEditor({ lang, initial, onBack, onStart }: Props) {
   }
 
   return (
-    <div className="mx-auto w-full max-w-6xl px-5 pb-36 pt-6 sm:px-8">
-      <div className="mb-8 flex items-center justify-between gap-4">
+    <div className="mx-auto w-full max-w-6xl px-5 pb-64 pt-6 sm:px-8 sm:pb-36">
+      <div className="mb-8 flex flex-wrap items-center justify-between gap-3">
         <Button variant="ghost" title={t('backHomeHelp')} onClick={onBack}><ArrowLeft />{t('back')}</Button>
-        <div className="flex items-center gap-3">
+        <div className="flex flex-wrap items-center gap-2">
           <span className="rounded-full bg-white/70 px-3 py-1.5 text-xs font-semibold text-muted-foreground shadow-sm">{t('saveDraft')}</span>
           <Button variant="outline" title={t('resetAllHelp')} onClick={() => setConfirm('resetAll')}><RotateCcw />{t('resetAll')}</Button>
         </div>
@@ -187,7 +187,7 @@ export function ActivityEditor({ lang, initial, onBack, onStart }: Props) {
         </Card>
       </div>
 
-      <div className="fixed inset-x-0 bottom-0 z-20 border-t bg-background/92 px-5 py-4 shadow-[0_-12px_40px_rgb(60_38_20/.08)] backdrop-blur-lg">
+      <div className="fixed inset-x-0 bottom-0 z-20 border-t bg-background/92 px-5 pb-20 pt-4 shadow-[0_-12px_40px_rgb(60_38_20/.08)] backdrop-blur-lg sm:pb-4">
         <div className="mx-auto flex max-w-6xl flex-col justify-end gap-3 sm:flex-row">
           {!valid && <p className="mr-auto self-center text-sm font-medium text-destructive">{config.mode === 'roles' ? t('validationRoles') : t('validationTitle')}</p>}
           <Button size="lg" variant="outline" title={t('prepareUrlHelp')} disabled={!valid} onClick={prepare}><Link2 />{t('prepareUrl')}</Button>

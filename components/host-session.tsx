@@ -227,7 +227,7 @@ export function HostSession({ config, lang, onExit }: Props) {
   const submitted = snapshot.participants.filter((participant) => participant.submitted).length;
 
   return (
-    <div className="mx-auto min-h-screen w-full max-w-7xl px-5 py-6 sm:px-8">
+    <div className="mx-auto min-h-screen w-full max-w-7xl px-5 pb-28 pt-6 sm:px-8 sm:pb-10">
       <header className="mb-6 flex flex-wrap items-center justify-between gap-3">
         <Button variant="ghost" title={t('exitSessionHelp')} onClick={onExit}><ArrowLeft />{t('back')}</Button>
         <div className="flex items-center gap-2 rounded-full bg-white px-4 py-2 text-sm font-semibold shadow-sm"><Radio className="size-4 text-emerald-600" />{config.title}</div>

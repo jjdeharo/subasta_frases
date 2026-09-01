@@ -78,7 +78,7 @@ export function ParticipantSession({ code, name, lang, onExit }: Props) {
   if (status === 'error') return <Centered><WifiOff className="size-12 text-destructive"/><h1 className="mt-5 text-2xl font-black">{t('connectionError')}</h1><Button className="mt-5" title={t('backHomeHelp')} onClick={onExit}>{t('back')}</Button></Centered>;
   if (!snapshot) return null;
 
-  return <div className="mx-auto min-h-screen w-full max-w-3xl px-5 py-6 sm:px-8">
+  return <div className="mx-auto min-h-screen w-full max-w-3xl px-5 pb-28 pt-6 sm:px-8 sm:pb-10">
     <header className="mb-7 flex items-center justify-between gap-3"><Button variant="ghost" title={t('exitSessionHelp')} onClick={onExit}><ArrowLeft />{t('back')}</Button>{me && <div className="rounded-full bg-white px-4 py-2 text-sm font-bold shadow-sm">{me.name}</div>}</header>
     {feedback && <div className="fixed left-1/2 top-5 z-50 -translate-x-1/2 rounded-full bg-foreground px-5 py-3 text-sm font-bold text-background shadow-xl">{feedback}</div>}
 
