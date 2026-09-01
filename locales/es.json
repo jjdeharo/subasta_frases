@@ -147,5 +147,11 @@
   "discardDraft": "Empezar de cero",
   "preparedLoaded": "Actividad preparada cargada",
   "removeParticipant": "Expulsar participante",
-  "language": "Idioma"
+  "language": "Idioma",
+  "appearance": "Apariencia",
+  "themeSystem": "Automático",
+  "themeLight": "Claro",
+  "themeDark": "Oscuro",
+  "close": "Cerrar",
+  "higherBidHelp": "Pujar dos incrementos adicionales"
 }

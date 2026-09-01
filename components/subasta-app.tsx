@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { ArrowLeft, BookOpenCheck, ChevronRight, Gavel, Globe2, HeartHandshake, LogIn, Tags, Users } from 'lucide-react';
+import { ArrowLeft, BookOpenCheck, ChevronRight, Gavel, Globe2, HeartHandshake, LogIn, Monitor, Moon, Sun, Tags, Users } from 'lucide-react';
 import { ActivityEditor } from '@/components/activity-editor';
 import { HostSession } from '@/components/host-session';
 import { ParticipantSession } from '@/components/participant-session';
@@ -12,6 +12,8 @@ import { detectLanguage, translate, type TranslationKey } from '@/lib/i18n';
 import { readPreparedActivity } from '@/lib/share';
 import { normalizeConfig, type ActivityConfig, type Lang, type Screen } from '@/lib/types';
 
+type ThemePreference = 'system' | 'light' | 'dark';
+
 export default function SubastaApp() {
   const [lang, setLang] = useState<Lang>('es');
   const [screen, setScreen] = useState<Screen>('home');
@@ -19,6 +21,7 @@ export default function SubastaApp() {
   const [hostConfig, setHostConfig] = useState<ActivityConfig | null>(null);
   const [joinCode, setJoinCode] = useState('');
   const [participant, setParticipant] = useState<{ code: string; name: string } | null>(null);
+  const [theme, setTheme] = useState<ThemePreference>('system');
   const t = (key: TranslationKey, replacements?: Record<string, string | number>) => translate(lang, key, replacements);
 
   useEffect(() => {
@@ -30,7 +33,25 @@ export default function SubastaApp() {
     else if (session) { setJoinCode(session.toUpperCase()); setScreen('join'); }
   }, []);
 
+  useEffect(() => {
+    const saved = localStorage.getItem('subasta-theme');
+    if (saved === 'system' || saved === 'light' || saved === 'dark') setTheme(saved);
+  }, []);
+
+  useEffect(() => {
+    const media = window.matchMedia('(prefers-color-scheme: dark)');
+    const apply = () => {
+      const dark = theme === 'dark' || (theme === 'system' && media.matches);
+      document.documentElement.classList.toggle('dark', dark);
+      document.documentElement.style.colorScheme = dark ? 'dark' : 'light';
+    };
+    apply();
+    media.addEventListener('change', apply);
+    return () => media.removeEventListener('change', apply);
+  }, [theme]);
+
   function changeLanguage(next: Lang) { setLang(next); localStorage.setItem('subasta-lang', next); document.documentElement.lang = next; }
+  function changeTheme(next: ThemePreference) { setTheme(next); localStorage.setItem('subasta-theme', next); }
   function openEditor() {
     let draft: ActivityConfig | null = null;
     try { draft = JSON.parse(localStorage.getItem('subasta-draft') || 'null') as ActivityConfig | null; } catch { /* ignored */ }
@@ -42,7 +63,7 @@ export default function SubastaApp() {
   }
 
   return <main className="min-h-screen">
-    <LanguageSwitch lang={lang} onChange={changeLanguage} label={t('language')} />
+    <AppearanceControls lang={lang} theme={theme} onLanguageChange={changeLanguage} onThemeChange={changeTheme} t={t} />
     {screen === 'home' && <Landing t={t} onCreate={openEditor} onJoin={() => setScreen('join')} />}
     {screen === 'editor' && <ActivityEditor lang={lang} initial={initial} onBack={exitToHome} onStart={(config) => { setHostConfig(config); setScreen('host'); }} />}
     {screen === 'join' && <JoinForm lang={lang} initialCode={joinCode} onBack={exitToHome} onJoin={(code, name) => { setParticipant({ code, name }); setScreen('participant'); }} />}
@@ -51,8 +72,13 @@ export default function SubastaApp() {
   </main>;
 }
 
-function LanguageSwitch({ lang, onChange, label }: { lang: Lang; onChange: (lang: Lang) => void; label: string }) {
-  return <label className="fixed bottom-4 right-4 z-40 flex items-center gap-2 rounded-full border bg-white/90 px-3 py-2 text-sm shadow-lg backdrop-blur"><Globe2 className="size-4 text-muted-foreground"/><span className="sr-only">{label}</span><select aria-label={label} className="bg-transparent font-semibold outline-none" value={lang} onChange={(event) => onChange(event.target.value as Lang)}><option value="es">Español</option><option value="ca">Català</option></select></label>;
+function AppearanceControls({ lang, theme, onLanguageChange, onThemeChange, t }: { lang: Lang; theme: ThemePreference; onLanguageChange: (lang: Lang) => void; onThemeChange: (theme: ThemePreference) => void; t: (key: TranslationKey) => string }) {
+  const ThemeIcon = theme === 'dark' ? Moon : theme === 'light' ? Sun : Monitor;
+  return <div className="fixed bottom-4 right-4 z-40 flex flex-wrap items-center justify-end gap-1 rounded-2xl border bg-white/90 p-1.5 text-sm shadow-lg backdrop-blur">
+    <label className="flex items-center gap-2 rounded-xl px-2 py-1.5" title={t('language')}><Globe2 className="size-4 text-muted-foreground"/><span className="sr-only">{t('language')}</span><select aria-label={t('language')} className="bg-transparent font-semibold outline-none" value={lang} onChange={(event) => onLanguageChange(event.target.value as Lang)}><option value="es">Español</option><option value="ca">Català</option></select></label>
+    <span className="h-6 w-px bg-border" />
+    <label className="flex items-center gap-2 rounded-xl px-2 py-1.5" title={t('appearance')}><ThemeIcon className="size-4 text-muted-foreground"/><span className="sr-only">{t('appearance')}</span><select aria-label={t('appearance')} className="bg-transparent font-semibold outline-none" value={theme} onChange={(event) => onThemeChange(event.target.value as ThemePreference)}><option value="system">{t('themeSystem')}</option><option value="light">{t('themeLight')}</option><option value="dark">{t('themeDark')}</option></select></label>
+  </div>;
 }
 
 function Landing({ t, onCreate, onJoin }: { t: (key: TranslationKey) => string; onCreate: () => void; onJoin: () => void }) {

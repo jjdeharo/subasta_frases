@@ -1,6 +1,7 @@
 @import 'tailwindcss';
 @import 'tw-animate-css';
 @import 'shadcn/tailwind.css';
+@custom-variant dark (&:where(.dark, .dark *));
 
 @theme inline {
   --color-background: var(--background); --color-foreground: var(--foreground);
@@ -18,11 +19,25 @@
   --primary: oklch(.47 .145 41); --primary-foreground: oklch(.99 .008 80); --secondary: oklch(.91 .075 80); --secondary-foreground: oklch(.36 .075 48);
   --muted: oklch(.94 .018 77); --muted-foreground: oklch(.49 .038 53); --accent: oklch(.9 .08 150); --accent-foreground: oklch(.33 .09 150);
   --destructive: oklch(.58 .22 28); --border: oklch(.87 .03 74); --input: oklch(.85 .03 74); --ring: oklch(.55 .14 42); --radius: .8rem;
+  --body-glow: rgb(255 255 255 / .95); --body-pattern: rgb(124 74 35 / .025);
+}
+.dark {
+  --background: oklch(.19 .02 55); --foreground: oklch(.93 .018 78); --card: oklch(.245 .025 55); --card-foreground: var(--foreground);
+  --primary: oklch(.7 .145 55); --primary-foreground: oklch(.16 .025 45); --secondary: oklch(.34 .065 65); --secondary-foreground: oklch(.94 .035 78);
+  --muted: oklch(.275 .02 55); --muted-foreground: oklch(.72 .025 70); --accent: oklch(.34 .075 150); --accent-foreground: oklch(.93 .04 145);
+  --destructive: oklch(.72 .18 28); --border: oklch(.36 .025 60); --input: oklch(.39 .025 60); --ring: oklch(.68 .13 52);
+  --body-glow: rgb(110 76 47 / .13); --body-pattern: rgb(255 220 180 / .018);
 }
 @layer base {
   * { @apply border-border outline-ring/50; }
   body { @apply font-sans; }
   h1, h2 { letter-spacing: -.018em !important; font-weight: 800 !important; }
-  body { @apply bg-background text-foreground; background-image: radial-gradient(circle at 15% 8%, rgb(255 255 255 / .95), transparent 28%), linear-gradient(135deg, transparent 0 48%, rgb(124 74 35 / .025) 48% 52%, transparent 52%); background-size: auto, 28px 28px; }
+  body { @apply bg-background text-foreground; background-image: radial-gradient(circle at 15% 8%, var(--body-glow), transparent 28%), linear-gradient(135deg, transparent 0 48%, var(--body-pattern) 48% 52%, transparent 52%); background-size: auto, 28px 28px; }
   button, a, select { touch-action: manipulation; }
 }
+.dark [class~="bg-white"], .dark [class~="bg-white/70"], .dark [class~="bg-white/90"], .dark [class~="bg-[#fff8e8]"], .dark [class~="bg-[#eefbf4]"], .dark [class~="bg-[#f3f0ff]"] { background-color: var(--card); }
+.dark [class~="bg-emerald-50"] { background-color: color-mix(in oklch, var(--card), oklch(.45 .13 150) 24%); }
+.dark [class~="bg-rose-50"], .dark [class~="bg-red-50"] { background-color: color-mix(in oklch, var(--card), oklch(.45 .15 25) 24%); }
+.dark [class~="bg-stone-50"] { background-color: var(--muted); }
+.dark [class~="text-stone-600"], .dark [class~="text-emerald-800"], .dark [class~="text-rose-800"], .dark [class~="text-red-700"], .dark [class~="text-amber-700"] { color: var(--foreground); }
+.dark select, .dark option { background-color: var(--card); color: var(--foreground); }

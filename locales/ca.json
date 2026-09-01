@@ -147,5 +147,11 @@
   "discardDraft": "Comença de zero",
   "preparedLoaded": "Activitat preparada carregada",
   "removeParticipant": "Expulsa el participant",
-  "language": "Idioma"
+  "language": "Idioma",
+  "appearance": "Aparença",
+  "themeSystem": "Automàtic",
+  "themeLight": "Clar",
+  "themeDark": "Fosc",
+  "close": "Tanca",
+  "higherBidHelp": "Puja dos increments addicionals"
 }

@@ -46,11 +46,13 @@ function Button({
   size = 'default',
   ...props
 }: ButtonPrimitive.Props & VariantProps<typeof buttonVariants>) {
+  const tooltip = props.title ?? (typeof props['aria-label'] === 'string' ? props['aria-label'] : undefined);
   return (
     <ButtonPrimitive
       data-slot="button"
       className={cn(buttonVariants({ variant, size, className }))}
       {...props}
+      title={tooltip}
     />
   );
 }

@@ -92,7 +92,7 @@ export function ActivityEditor({ lang, initial, onBack, onStart }: Props) {
             <CardHeader><CardTitle>{t('activityType')}</CardTitle></CardHeader>
             <CardContent className="grid gap-3 sm:grid-cols-3">
               {(['knowledge', 'values', 'roles'] as const).map((mode) => (
-                <button key={mode} type="button" onClick={() => patch({ mode })} className={`flex gap-4 rounded-2xl border p-4 text-left transition ${config.mode === mode ? 'border-primary bg-primary/5 ring-2 ring-primary/15' : 'bg-white hover:border-primary/40'}`}>
+                <button key={mode} type="button" title={t(`${mode}Description` as TranslationKey)} onClick={() => patch({ mode })} className={`flex gap-4 rounded-2xl border p-4 text-left transition ${config.mode === mode ? 'border-primary bg-primary/5 ring-2 ring-primary/15' : 'bg-white hover:border-primary/40'}`}>
                   <span className={`grid size-10 shrink-0 place-items-center rounded-xl ${mode === 'knowledge' ? 'bg-amber-100 text-amber-800' : mode === 'values' ? 'bg-emerald-100 text-emerald-800' : 'bg-violet-100 text-violet-800'}`}>{mode === 'knowledge' ? <Gavel /> : mode === 'values' ? <HeartHandshake /> : <Tags />}</span>
                   <span><strong className="block">{t(mode)}</strong><span className="mt-1 block text-sm leading-5 text-muted-foreground">{t(`${mode}Description` as TranslationKey)}</span></span>
                 </button>
@@ -105,7 +105,7 @@ export function ActivityEditor({ lang, initial, onBack, onStart }: Props) {
             <CardContent className="space-y-3">
               <p className="text-sm leading-6 text-muted-foreground">{t('roleDefinitionsHelp')}</p>
               {config.roles.map((role, index) => <div key={role.id} className="grid gap-3 rounded-xl border bg-white p-3 sm:grid-cols-[44px_1fr_1.4fr_auto] sm:items-center">
-                <input type="color" className="h-10 w-11 cursor-pointer rounded-lg border bg-white p-1" aria-label={t('roleColor')} value={role.color} onChange={(event) => patchRole(role.id, { color: event.target.value })}/>
+                <input type="color" className="h-10 w-11 cursor-pointer rounded-lg border bg-white p-1" aria-label={t('roleColor')} title={t('roleColor')} value={role.color} onChange={(event) => patchRole(role.id, { color: event.target.value })}/>
                 <Input value={role.name} placeholder={`${t('role')} ${index + 1}`} onChange={(event) => patchRole(role.id, { name: event.target.value })}/>
                 <Input value={role.description} placeholder={t('roleDescriptionPlaceholder')} onChange={(event) => patchRole(role.id, { description: event.target.value })}/>
                 <Button size="icon-sm" variant="ghost" aria-label={t('delete')} disabled={config.roles.length <= 2} onClick={() => removeRole(role.id)}><Trash2 /></Button>
@@ -179,12 +179,12 @@ export function ActivityEditor({ lang, initial, onBack, onStart }: Props) {
         </div>
       </div>
 
-      {bulkOpen && <Modal onClose={() => setBulkOpen(false)} title={t('pasteList')}><p className="mb-3 text-sm text-muted-foreground">{t('pasteHelp')}</p><Textarea className="min-h-48" value={bulk} onChange={(event) => setBulk(event.target.value)} /><div className="mt-4 flex justify-end gap-2"><Button variant="ghost" onClick={() => setBulkOpen(false)}>{t('cancel')}</Button><Button disabled={!bulk.trim()} onClick={addBulk}>{t('add')}</Button></div></Modal>}
-      {preparedUrl && <Modal onClose={() => setPreparedUrl('')} title={t('preparedTitle')}><p className="text-sm leading-6 text-muted-foreground">{t('preparedText')}</p><div className="mt-4 flex gap-2"><Input readOnly value={preparedUrl} /><Button onClick={copyPrepared}>{copied ? <Check /> : <Copy />}{copied ? t('urlCopied') : t('copyUrl')}</Button></div>{preparedUrl.length > 1800 && <p className="mt-3 text-sm font-medium text-amber-700">{t('urlLongWarning')}</p>}</Modal>}
+      {bulkOpen && <Modal onClose={() => setBulkOpen(false)} title={t('pasteList')} closeLabel={t('close')}><p className="mb-3 text-sm text-muted-foreground">{t('pasteHelp')}</p><Textarea className="min-h-48" value={bulk} onChange={(event) => setBulk(event.target.value)} /><div className="mt-4 flex justify-end gap-2"><Button variant="ghost" onClick={() => setBulkOpen(false)}>{t('cancel')}</Button><Button disabled={!bulk.trim()} onClick={addBulk}>{t('add')}</Button></div></Modal>}
+      {preparedUrl && <Modal onClose={() => setPreparedUrl('')} title={t('preparedTitle')} closeLabel={t('close')}><p className="text-sm leading-6 text-muted-foreground">{t('preparedText')}</p><div className="mt-4 flex gap-2"><Input readOnly value={preparedUrl} /><Button onClick={copyPrepared}>{copied ? <Check /> : <Copy />}{copied ? t('urlCopied') : t('copyUrl')}</Button></div>{preparedUrl.length > 1800 && <p className="mt-3 text-sm font-medium text-amber-700">{t('urlLongWarning')}</p>}</Modal>}
     </div>
   );
 }
 
 function Field({ label, children }: { label: string; children: React.ReactNode }) { return <label className="block"><span className="mb-1.5 block text-sm font-semibold">{label}</span>{children}</label>; }
 function NumberField({ label, value, min, onChange }: { label: string; value: number; min: number; onChange: (value: number) => void }) { return <Field label={label}><Input type="number" min={min} value={value} onChange={(event) => onChange(Math.max(min, Number(event.target.value) || min))} /></Field>; }
-function Modal({ title, children, onClose }: { title: string; children: React.ReactNode; onClose: () => void }) { return <dialog open className="fixed inset-0 z-50 grid h-full max-h-none w-full max-w-none place-items-center bg-stone-950/35 p-5 backdrop-blur-sm"><Card className="w-full max-w-2xl shadow-2xl"><CardHeader className="flex-row items-center justify-between"><CardTitle className="text-xl">{title}</CardTitle><Button size="icon" variant="ghost" onClick={onClose}><X /></Button></CardHeader><CardContent>{children}</CardContent></Card></dialog>; }
+function Modal({ title, closeLabel, children, onClose }: { title: string; closeLabel: string; children: React.ReactNode; onClose: () => void }) { return <dialog open className="fixed inset-0 z-50 grid h-full max-h-none w-full max-w-none place-items-center bg-stone-950/35 p-5 backdrop-blur-sm"><Card className="w-full max-w-2xl shadow-2xl"><CardHeader className="flex-row items-center justify-between"><CardTitle className="text-xl">{title}</CardTitle><Button size="icon" variant="ghost" aria-label={closeLabel} onClick={onClose}><X /></Button></CardHeader><CardContent>{children}</CardContent></Card></dialog>; }
