@@ -117,7 +117,6 @@ export function HostSession({ config, lang, onExit }: Props) {
       const timeUp = config.bidSeconds > 0 && auction.secondsLeft === 0;
       if (!timeUp && Number.isFinite(amount) && amount >= minimum && amount <= participant.balance && auction.leaderId !== participant.id) {
         auction.currentBid = amount; auction.leaderId = participant.id;
-        if (auction.secondsLeft > 0 && auction.secondsLeft < 5) auction.secondsLeft = 5;
         publish();
       }
     }
