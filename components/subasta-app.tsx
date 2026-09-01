@@ -9,6 +9,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { detectLanguage, translate, type TranslationKey } from '@/lib/i18n';
+import { APP_VERSION } from '@/lib/version';
 import { readPreparedActivity } from '@/lib/share';
 import { normalizeConfig, type ActivityConfig, type Lang, type Screen } from '@/lib/types';
 
@@ -89,6 +90,8 @@ function Footer({ t }: { t: (key: TranslationKey) => string }) {
     <span>{t('footerCode')}:</span>{' '}<a href="https://www.gnu.org/licenses/agpl-3.0.html" target="_blank" rel="noopener noreferrer license" className="font-semibold underline underline-offset-4 hover:text-foreground">AGPL v3</a>
     <span aria-hidden="true"> · </span>
     <span>{t('footerContent')}:</span>{' '}<a href="https://creativecommons.org/licenses/by-sa/4.0/" target="_blank" rel="noopener noreferrer license" className="font-semibold underline underline-offset-4 hover:text-foreground">CC BY-SA 4.0</a>
+    <span aria-hidden="true"> · </span>
+    <span>v{APP_VERSION}</span>
   </footer>;
 }
 
