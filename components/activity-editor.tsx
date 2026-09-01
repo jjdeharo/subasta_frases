@@ -95,13 +95,7 @@ export function ActivityEditor({ lang, initial, onBack, onStart }: Props) {
           <Button variant="outline" title={t('resetAllHelp')} onClick={() => setConfirm('resetAll')}><RotateCcw />{t('resetAll')}</Button>
         </div>
       </div>
-      {confirm && <div className="mb-8 rounded-2xl border border-destructive/40 bg-destructive/5 p-4">
-        <p className="text-sm font-semibold leading-6">{t(confirm === 'resetAll' ? 'resetAllConfirm' : 'clearPhrasesConfirm')}</p>
-        <div className="mt-3 flex flex-wrap gap-2">
-          <Button variant="destructive" title={t(confirm === 'resetAll' ? 'resetAllHelp' : 'clearPhrasesHelp')} onClick={confirm === 'resetAll' ? resetAll : clearPhrases}><Trash2 />{t('confirmDelete')}</Button>
-          <Button variant="outline" onClick={() => setConfirm(null)}>{t('cancel')}</Button>
-        </div>
-      </div>}
+
       <div className="mb-9 max-w-3xl">
         <p className="text-sm font-bold uppercase tracking-[.14em] text-primary">{t('activityEditor')}</p>
         <h1 className="mt-2 text-4xl font-black tracking-[-.04em] sm:text-5xl">{config.title || t('createActivity')}</h1>
@@ -201,6 +195,13 @@ export function ActivityEditor({ lang, initial, onBack, onStart }: Props) {
         </div>
       </div>
 
+      {confirm && <Modal onClose={() => setConfirm(null)} title={t(confirm === 'resetAll' ? 'resetAll' : 'clearPhrases')} closeLabel={t('close')}>
+        <p className="text-sm leading-6 text-muted-foreground">{t(confirm === 'resetAll' ? 'resetAllConfirm' : 'clearPhrasesConfirm')}</p>
+        <div className="mt-5 flex justify-end gap-2">
+          <Button variant="ghost" onClick={() => setConfirm(null)}>{t('cancel')}</Button>
+          <Button variant="destructive" title={t(confirm === 'resetAll' ? 'resetAllHelp' : 'clearPhrasesHelp')} onClick={confirm === 'resetAll' ? resetAll : clearPhrases}><Trash2 />{t('confirmDelete')}</Button>
+        </div>
+      </Modal>}
       {bulkOpen && <Modal onClose={() => setBulkOpen(false)} title={t('pasteList')} closeLabel={t('close')}><p className="mb-3 text-sm text-muted-foreground">{t('pasteHelp')}</p><Textarea className="min-h-48" value={bulk} onChange={(event) => setBulk(event.target.value)} /><div className="mt-4 flex justify-end gap-2"><Button variant="ghost" title={t('cancelPasteHelp')} onClick={() => setBulkOpen(false)}>{t('cancel')}</Button><Button title={t('addPastedHelp')} disabled={!bulk.trim()} onClick={addBulk}>{t('add')}</Button></div></Modal>}
       {preparedUrl && <Modal onClose={() => setPreparedUrl('')} title={t('preparedTitle')} closeLabel={t('close')}><p className="text-sm leading-6 text-muted-foreground">{t('preparedText')}</p><div className="mt-4 flex gap-2"><Input readOnly value={preparedUrl} /><Button title={t('copyPreparedHelp')} onClick={copyPrepared}>{copied ? <Check /> : <Copy />}{copied ? t('urlCopied') : t('copyUrl')}</Button></div>{preparedUrl.length > 1800 && <p className="mt-3 text-sm font-medium text-amber-700">{t('urlLongWarning')}</p>}</Modal>}
     </div>
