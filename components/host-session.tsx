@@ -18,7 +18,7 @@ interface InternalState {
   revision: number;
   status: 'lobby' | 'running' | 'finished';
   participants: Map<string, ParticipantRecord>;
-  knowledge: { index: number; phase: 'planning' | 'discussion' | 'bidding' | 'revealed'; currentBid: number; leaderId: string | null; secondsLeft: number; lots: LotResult[] };
+  knowledge: { index: number; phase: 'planning' | 'discussion' | 'bidding' | 'revealed'; currentBid: number; leaderId: string | null; secondsLeft: number; endsAt: number | null; lots: LotResult[] };
   values: { open: boolean };
 }
 
@@ -34,9 +34,10 @@ export function HostSession({ config, lang, onExit }: Props) {
   const peerRef = useRef<Peer | null>(null);
   const connections = useRef(new Map<string, DataConnection>());
   const timerRef = useRef<number | null>(null);
+  const tickRef = useRef<(() => void) | null>(null);
   const stateRef = useRef<InternalState>({
     revision: 0, status: 'lobby', participants: new Map(),
-    knowledge: { index: 0, phase: 'planning', currentBid: 0, leaderId: null, secondsLeft: 0, lots: [] },
+    knowledge: { index: 0, phase: 'planning', currentBid: 0, leaderId: null, secondsLeft: 0, endsAt: null, lots: [] },
     values: { open: false },
   });
   const [snapshot, setSnapshot] = useState<ClientSnapshot>(() => makeSnapshot(config, stateRef.current));
@@ -73,6 +74,13 @@ export function HostSession({ config, lang, onExit }: Props) {
     };
     void start();
     return () => { cancelled = true; if (timerRef.current) window.clearInterval(timerRef.current); peerRef.current?.destroy(); };
+  }, []);
+
+  useEffect(() => {
+    const recompute = () => { if (document.visibilityState === 'visible') tickRef.current?.(); };
+    document.addEventListener('visibilitychange', recompute);
+    window.addEventListener('focus', recompute);
+    return () => { document.removeEventListener('visibilitychange', recompute); window.removeEventListener('focus', recompute); };
   }, []);
 
   useEffect(() => {
@@ -114,7 +122,7 @@ export function HostSession({ config, lang, onExit }: Props) {
       const auction = stateRef.current.knowledge;
       const minimum = auction.currentBid === 0 ? config.minBid : auction.currentBid + config.increment;
       const amount = Math.floor(Number(message.amount));
-      const timeUp = config.bidSeconds > 0 && auction.secondsLeft === 0;
+      const timeUp = auction.endsAt !== null && Date.now() >= auction.endsAt;
       if (!timeUp && Number.isFinite(amount) && amount >= minimum && amount <= participant.balance && auction.leaderId !== participant.id) {
         auction.currentBid = amount; auction.leaderId = participant.id;
         publish();
@@ -128,18 +136,33 @@ export function HostSession({ config, lang, onExit }: Props) {
     }
   }
 
+  function stopTimer() {
+    if (timerRef.current) { window.clearInterval(timerRef.current); timerRef.current = null; }
+    tickRef.current = null;
+    stateRef.current.knowledge.endsAt = null;
+  }
   function runTimer(seconds: number, onEnd?: () => void) {
-    if (timerRef.current) window.clearInterval(timerRef.current);
-    stateRef.current.knowledge.secondsLeft = seconds; publish();
-    if (seconds <= 0) return;
-    timerRef.current = window.setInterval(() => {
-      stateRef.current.knowledge.secondsLeft = Math.max(0, stateRef.current.knowledge.secondsLeft - 1);
-      publish();
-      if (stateRef.current.knowledge.secondsLeft === 0 && timerRef.current) {
-        window.clearInterval(timerRef.current); timerRef.current = null;
+    stopTimer();
+    stateRef.current.knowledge.secondsLeft = Math.max(0, seconds);
+    if (seconds <= 0) { publish(); return; }
+    const endsAt = Date.now() + seconds * 1000;
+    stateRef.current.knowledge.endsAt = endsAt; publish();
+    // El tiempo restante se calcula contra el reloj del sistema: si el navegador
+    // frena o congela los temporizadores en segundo plano, el primer tic que se
+    // ejecute recupera el valor real en vez de arrastrar el retraso.
+    const tick = () => {
+      const auction = stateRef.current.knowledge;
+      if (auction.endsAt !== endsAt) return;
+      const left = Math.max(0, Math.ceil((endsAt - Date.now()) / 1000));
+      if (left !== auction.secondsLeft) { auction.secondsLeft = left; publish(); }
+      if (left === 0) {
+        if (timerRef.current) { window.clearInterval(timerRef.current); timerRef.current = null; }
+        tickRef.current = null;
         onEnd?.();
       }
-    }, 1000);
+    };
+    tickRef.current = tick;
+    timerRef.current = window.setInterval(tick, 250);
   }
 
   function startActivity() {
@@ -156,7 +179,7 @@ export function HostSession({ config, lang, onExit }: Props) {
     runTimer(config.bidSeconds);
   }
   function closeBidding() {
-    if (timerRef.current) { window.clearInterval(timerRef.current); timerRef.current = null; }
+    stopTimer();
     const auction = stateRef.current.knowledge;
     const item = config.items[auction.index];
     const winner = auction.leaderId ? stateRef.current.participants.get(auction.leaderId) : null;
@@ -173,7 +196,7 @@ export function HostSession({ config, lang, onExit }: Props) {
     if (next >= config.items.length) finish(); else startLot(next);
   }
   function finish() {
-    if (timerRef.current) { window.clearInterval(timerRef.current); timerRef.current = null; }
+    stopTimer();
     stateRef.current.knowledge.secondsLeft = 0;
     stateRef.current.status = 'finished'; stateRef.current.values.open = false; publish();
   }
@@ -271,7 +294,8 @@ function makeSnapshot(config: ActivityConfig, state: InternalState): ClientSnaps
   const totals = state.status === 'finished' && config.mode === 'values' ? Object.fromEntries(config.items.map((item) => [item.id, [...state.participants.values()].reduce((sum, participant) => sum + (participant.allocation[item.id] || 0), 0)])) : null;
   const allocations = state.status === 'finished' && config.mode === 'values' && config.showIndividualResults ? Object.fromEntries([...state.participants.values()].map((participant) => [participant.name, participant.allocation])) : null;
   const lots = hideAnswers ? state.knowledge.lots.map(({ correct: _correct, ...lot }) => lot) : state.knowledge.lots;
-  return { revision: state.revision, status: state.status, config: { ...config, items }, participants, knowledge: config.mode !== 'values' ? { ...state.knowledge, lots, leaderName: leader?.name ?? null } : undefined, values: config.mode === 'values' ? { open: state.values.open, totals, allocations } : undefined };
+  const { endsAt: _endsAt, ...knowledge } = state.knowledge;
+  return { revision: state.revision, status: state.status, config: { ...config, items }, participants, knowledge: config.mode !== 'values' ? { ...knowledge, lots, leaderName: leader?.name ?? null } : undefined, values: config.mode === 'values' ? { open: state.values.open, totals, allocations } : undefined };
 }
 
 function ParticipantList({ participants, roles, t, onRemove, onRoleChange }: { participants: ParticipantPublic[]; roles?: RoleDefinition[]; t: (key: TranslationKey, replacements?: Record<string, string | number>) => string; onRemove: (id: string) => void; onRoleChange?: (id: string, roleId: string) => void }) {
