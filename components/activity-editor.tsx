@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
-import { ArrowDown, ArrowLeft, ArrowUp, Check, Copy, Gavel, HeartHandshake, Link2, ListPlus, Play, Plus, Tags, Trash2, X } from 'lucide-react';
+import { ArrowDown, ArrowLeft, ArrowUp, Check, Copy, Eraser, Gavel, HeartHandshake, Link2, ListPlus, Play, Plus, RotateCcw, Tags, Trash2, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -24,6 +24,7 @@ export function ActivityEditor({ lang, initial, onBack, onStart }: Props) {
   const [bulk, setBulk] = useState('');
   const [preparedUrl, setPreparedUrl] = useState('');
   const [copied, setCopied] = useState(false);
+  const [confirm, setConfirm] = useState<'clearPhrases' | 'resetAll' | null>(null);
   const valid = useMemo(() => {
     const basic = config.title.trim().length > 0 && config.items.filter((item) => item.text.trim()).length >= 2;
     const validRoles = config.roles.filter((role) => role.name.trim()).length >= 2 && config.items.every((item) => !item.text.trim() || config.roles.some((role) => role.id === item.roleId));
@@ -66,6 +67,16 @@ export function ActivityEditor({ lang, initial, onBack, onStart }: Props) {
     if (items.length) patch({ items: [...config.items.filter((item) => item.text.trim()), ...items] });
     setBulk(''); setBulkOpen(false);
   }
+  function emptyItem(): PhraseItem { return { id: uid(), text: '', correct: true, explanation: '', category: '', roleId: config.roles[0]?.id || '' }; }
+  function clearPhrases() {
+    setConfirm(null); setPreparedUrl('');
+    patch({ items: [emptyItem(), emptyItem()] });
+  }
+  function resetAll() {
+    setConfirm(null); setPreparedUrl('');
+    localStorage.removeItem('subasta-draft');
+    setConfig({ ...defaultConfig(), currencyName: lang === 'ca' ? 'crèdits' : 'créditos' });
+  }
   function prepare() {
     if (!valid) return;
     setPreparedUrl(createPreparedUrl({ ...config, items: config.items.filter((item) => item.text.trim()) }, lang));
@@ -79,8 +90,18 @@ export function ActivityEditor({ lang, initial, onBack, onStart }: Props) {
     <div className="mx-auto w-full max-w-6xl px-5 pb-36 pt-6 sm:px-8">
       <div className="mb-8 flex items-center justify-between gap-4">
         <Button variant="ghost" title={t('backHomeHelp')} onClick={onBack}><ArrowLeft />{t('back')}</Button>
-        <span className="rounded-full bg-white/70 px-3 py-1.5 text-xs font-semibold text-muted-foreground shadow-sm">{t('saveDraft')}</span>
+        <div className="flex items-center gap-3">
+          <span className="rounded-full bg-white/70 px-3 py-1.5 text-xs font-semibold text-muted-foreground shadow-sm">{t('saveDraft')}</span>
+          <Button variant="outline" title={t('resetAllHelp')} onClick={() => setConfirm('resetAll')}><RotateCcw />{t('resetAll')}</Button>
+        </div>
       </div>
+      {confirm && <div className="mb-8 rounded-2xl border border-destructive/40 bg-destructive/5 p-4">
+        <p className="text-sm font-semibold leading-6">{t(confirm === 'resetAll' ? 'resetAllConfirm' : 'clearPhrasesConfirm')}</p>
+        <div className="mt-3 flex flex-wrap gap-2">
+          <Button variant="destructive" title={t(confirm === 'resetAll' ? 'resetAllHelp' : 'clearPhrasesHelp')} onClick={confirm === 'resetAll' ? resetAll : clearPhrases}><Trash2 />{t('confirmDelete')}</Button>
+          <Button variant="outline" onClick={() => setConfirm(null)}>{t('cancel')}</Button>
+        </div>
+      </div>}
       <div className="mb-9 max-w-3xl">
         <p className="text-sm font-bold uppercase tracking-[.14em] text-primary">{t('activityEditor')}</p>
         <h1 className="mt-2 text-4xl font-black tracking-[-.04em] sm:text-5xl">{config.title || t('createActivity')}</h1>
@@ -122,7 +143,7 @@ export function ActivityEditor({ lang, initial, onBack, onStart }: Props) {
           </Card>
 
           <section>
-            <div className="mb-4 flex flex-wrap items-center justify-between gap-3"><h2 className="text-2xl font-black tracking-tight">{t('phrases')} <span className="text-base font-medium text-muted-foreground">({config.items.length})</span></h2><Button variant="outline" title={t('pasteListHelp')} onClick={() => setBulkOpen(true)}><ListPlus />{t('pasteList')}</Button></div>
+            <div className="mb-4 flex flex-wrap items-center justify-between gap-3"><h2 className="text-2xl font-black tracking-tight">{t('phrases')} <span className="text-base font-medium text-muted-foreground">({config.items.length})</span></h2><div className="flex flex-wrap gap-2"><Button variant="outline" title={t('clearPhrasesHelp')} onClick={() => setConfirm('clearPhrases')}><Eraser />{t('clearPhrases')}</Button><Button variant="outline" title={t('pasteListHelp')} onClick={() => setBulkOpen(true)}><ListPlus />{t('pasteList')}</Button></div></div>
             <div className="space-y-4">
               {config.items.map((item, index) => (
                 <Card key={item.id} className="shadow-sm">
