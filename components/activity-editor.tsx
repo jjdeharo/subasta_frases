@@ -78,7 +78,7 @@ export function ActivityEditor({ lang, initial, onBack, onStart }: Props) {
   return (
     <div className="mx-auto w-full max-w-6xl px-5 pb-36 pt-6 sm:px-8">
       <div className="mb-8 flex items-center justify-between gap-4">
-        <Button variant="ghost" onClick={onBack}><ArrowLeft />{t('back')}</Button>
+        <Button variant="ghost" title={t('backHomeHelp')} onClick={onBack}><ArrowLeft />{t('back')}</Button>
         <span className="rounded-full bg-white/70 px-3 py-1.5 text-xs font-semibold text-muted-foreground shadow-sm">{t('saveDraft')}</span>
       </div>
       <div className="mb-9 max-w-3xl">
@@ -108,9 +108,9 @@ export function ActivityEditor({ lang, initial, onBack, onStart }: Props) {
                 <input type="color" className="h-10 w-11 cursor-pointer rounded-lg border bg-white p-1" aria-label={t('roleColor')} title={t('roleColor')} value={role.color} onChange={(event) => patchRole(role.id, { color: event.target.value })}/>
                 <Input value={role.name} placeholder={`${t('role')} ${index + 1}`} onChange={(event) => patchRole(role.id, { name: event.target.value })}/>
                 <Input value={role.description} placeholder={t('roleDescriptionPlaceholder')} onChange={(event) => patchRole(role.id, { description: event.target.value })}/>
-                <Button size="icon-sm" variant="ghost" aria-label={t('delete')} disabled={config.roles.length <= 2} onClick={() => removeRole(role.id)}><Trash2 /></Button>
+                <Button size="icon-sm" variant="ghost" aria-label={t('delete')} title={t('deleteRoleHelp')} disabled={config.roles.length <= 2} onClick={() => removeRole(role.id)}><Trash2 /></Button>
               </div>)}
-              <Button className="w-full border-dashed" variant="outline" onClick={addRole}><Plus />{t('addRole')}</Button>
+              <Button className="w-full border-dashed" variant="outline" title={t('addRoleHelp')} onClick={addRole}><Plus />{t('addRole')}</Button>
             </CardContent>
           </Card>}
 
@@ -122,25 +122,25 @@ export function ActivityEditor({ lang, initial, onBack, onStart }: Props) {
           </Card>
 
           <section>
-            <div className="mb-4 flex flex-wrap items-center justify-between gap-3"><h2 className="text-2xl font-black tracking-tight">{t('phrases')} <span className="text-base font-medium text-muted-foreground">({config.items.length})</span></h2><Button variant="outline" onClick={() => setBulkOpen(true)}><ListPlus />{t('pasteList')}</Button></div>
+            <div className="mb-4 flex flex-wrap items-center justify-between gap-3"><h2 className="text-2xl font-black tracking-tight">{t('phrases')} <span className="text-base font-medium text-muted-foreground">({config.items.length})</span></h2><Button variant="outline" title={t('pasteListHelp')} onClick={() => setBulkOpen(true)}><ListPlus />{t('pasteList')}</Button></div>
             <div className="space-y-4">
               {config.items.map((item, index) => (
                 <Card key={item.id} className="shadow-sm">
                   <CardHeader className="flex-row items-center justify-between">
                     <CardTitle className="flex items-center gap-2"><span className="grid size-7 place-items-center rounded-full bg-secondary text-xs font-black">{index + 1}</span>{t('phrase')}</CardTitle>
                     <div className="flex gap-1">
-                      <Button size="icon-sm" variant="ghost" aria-label={t('moveUp')} disabled={index === 0} onClick={() => move(index, -1)}><ArrowUp /></Button>
-                      <Button size="icon-sm" variant="ghost" aria-label={t('moveDown')} disabled={index === config.items.length - 1} onClick={() => move(index, 1)}><ArrowDown /></Button>
-                      <Button size="icon-sm" variant="ghost" aria-label={t('duplicate')} onClick={() => duplicateItem(index)}><Copy /></Button>
-                      <Button size="icon-sm" variant="ghost" aria-label={t('delete')} disabled={config.items.length <= 2} onClick={() => patch({ items: config.items.filter((entry) => entry.id !== item.id) })}><Trash2 /></Button>
+                      <Button size="icon-sm" variant="ghost" aria-label={t('moveUp')} title={t('movePhraseUpHelp')} disabled={index === 0} onClick={() => move(index, -1)}><ArrowUp /></Button>
+                      <Button size="icon-sm" variant="ghost" aria-label={t('moveDown')} title={t('movePhraseDownHelp')} disabled={index === config.items.length - 1} onClick={() => move(index, 1)}><ArrowDown /></Button>
+                      <Button size="icon-sm" variant="ghost" aria-label={t('duplicate')} title={t('duplicatePhraseHelp')} onClick={() => duplicateItem(index)}><Copy /></Button>
+                      <Button size="icon-sm" variant="ghost" aria-label={t('delete')} title={t('deletePhraseHelp')} disabled={config.items.length <= 2} onClick={() => patch({ items: config.items.filter((entry) => entry.id !== item.id) })}><Trash2 /></Button>
                     </div>
                   </CardHeader>
                   <CardContent className="space-y-4">
                     <Textarea value={item.text} placeholder={t('phrasePlaceholder')} onChange={(event) => patchItem(item.id, { text: event.target.value })} />
                     {config.mode === 'knowledge' ? <>
                       <div className="flex gap-2">
-                        <Button type="button" variant={item.correct ? 'default' : 'outline'} onClick={() => patchItem(item.id, { correct: true })}><Check />{t('correct')}</Button>
-                        <Button type="button" variant={!item.correct ? 'default' : 'outline'} onClick={() => patchItem(item.id, { correct: false })}><X />{t('incorrect')}</Button>
+                        <Button type="button" title={t('markCorrectHelp')} variant={item.correct ? 'default' : 'outline'} onClick={() => patchItem(item.id, { correct: true })}><Check />{t('correct')}</Button>
+                        <Button type="button" title={t('markIncorrectHelp')} variant={!item.correct ? 'default' : 'outline'} onClick={() => patchItem(item.id, { correct: false })}><X />{t('incorrect')}</Button>
                       </div>
                       <Field label={t('explanation')}><Textarea value={item.explanation} placeholder={t('explanationPlaceholder')} onChange={(event) => patchItem(item.id, { explanation: event.target.value })} /></Field>
                     </> : config.mode === 'roles' ? <>
@@ -151,7 +151,7 @@ export function ActivityEditor({ lang, initial, onBack, onStart }: Props) {
                 </Card>
               ))}
             </div>
-            <Button className="mt-4 w-full border-dashed" variant="outline" onClick={() => addItem()}><Plus />{t('addPhrase')}</Button>
+            <Button className="mt-4 w-full border-dashed" variant="outline" title={t('addPhraseHelp')} onClick={() => addItem()}><Plus />{t('addPhrase')}</Button>
           </section>
         </div>
 
@@ -174,13 +174,13 @@ export function ActivityEditor({ lang, initial, onBack, onStart }: Props) {
       <div className="fixed inset-x-0 bottom-0 z-20 border-t bg-background/92 px-5 py-4 shadow-[0_-12px_40px_rgb(60_38_20/.08)] backdrop-blur-lg">
         <div className="mx-auto flex max-w-6xl flex-col justify-end gap-3 sm:flex-row">
           {!valid && <p className="mr-auto self-center text-sm font-medium text-destructive">{config.mode === 'roles' ? t('validationRoles') : t('validationTitle')}</p>}
-          <Button size="lg" variant="outline" disabled={!valid} onClick={prepare}><Link2 />{t('prepareUrl')}</Button>
-          <Button size="lg" disabled={!valid} onClick={() => onStart({ ...config, items: config.items.filter((item) => item.text.trim()) })}><Play />{t('startNow')}</Button>
+          <Button size="lg" variant="outline" title={t('prepareUrlHelp')} disabled={!valid} onClick={prepare}><Link2 />{t('prepareUrl')}</Button>
+          <Button size="lg" title={t('startNowHelp')} disabled={!valid} onClick={() => onStart({ ...config, items: config.items.filter((item) => item.text.trim()) })}><Play />{t('startNow')}</Button>
         </div>
       </div>
 
-      {bulkOpen && <Modal onClose={() => setBulkOpen(false)} title={t('pasteList')} closeLabel={t('close')}><p className="mb-3 text-sm text-muted-foreground">{t('pasteHelp')}</p><Textarea className="min-h-48" value={bulk} onChange={(event) => setBulk(event.target.value)} /><div className="mt-4 flex justify-end gap-2"><Button variant="ghost" onClick={() => setBulkOpen(false)}>{t('cancel')}</Button><Button disabled={!bulk.trim()} onClick={addBulk}>{t('add')}</Button></div></Modal>}
-      {preparedUrl && <Modal onClose={() => setPreparedUrl('')} title={t('preparedTitle')} closeLabel={t('close')}><p className="text-sm leading-6 text-muted-foreground">{t('preparedText')}</p><div className="mt-4 flex gap-2"><Input readOnly value={preparedUrl} /><Button onClick={copyPrepared}>{copied ? <Check /> : <Copy />}{copied ? t('urlCopied') : t('copyUrl')}</Button></div>{preparedUrl.length > 1800 && <p className="mt-3 text-sm font-medium text-amber-700">{t('urlLongWarning')}</p>}</Modal>}
+      {bulkOpen && <Modal onClose={() => setBulkOpen(false)} title={t('pasteList')} closeLabel={t('close')}><p className="mb-3 text-sm text-muted-foreground">{t('pasteHelp')}</p><Textarea className="min-h-48" value={bulk} onChange={(event) => setBulk(event.target.value)} /><div className="mt-4 flex justify-end gap-2"><Button variant="ghost" title={t('cancelPasteHelp')} onClick={() => setBulkOpen(false)}>{t('cancel')}</Button><Button title={t('addPastedHelp')} disabled={!bulk.trim()} onClick={addBulk}>{t('add')}</Button></div></Modal>}
+      {preparedUrl && <Modal onClose={() => setPreparedUrl('')} title={t('preparedTitle')} closeLabel={t('close')}><p className="text-sm leading-6 text-muted-foreground">{t('preparedText')}</p><div className="mt-4 flex gap-2"><Input readOnly value={preparedUrl} /><Button title={t('copyPreparedHelp')} onClick={copyPrepared}>{copied ? <Check /> : <Copy />}{copied ? t('urlCopied') : t('copyUrl')}</Button></div>{preparedUrl.length > 1800 && <p className="mt-3 text-sm font-medium text-amber-700">{t('urlLongWarning')}</p>}</Modal>}
     </div>
   );
 }
