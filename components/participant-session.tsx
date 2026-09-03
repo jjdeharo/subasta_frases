@@ -114,11 +114,12 @@ function MyPhrases({ snapshot, token, t }: { snapshot: ClientSnapshot; token: st
       : <ul className="space-y-3">{mine.map((lot) => {
           const item = snapshot.config.items.find((entry) => entry.id === lot.itemId);
           const targetRole = snapshot.config.roles.find((role) => role.id === lot.roleId);
-          const tone = lot.correct === undefined && lot.matched === undefined ? 'border bg-white' : (lot.correct ?? lot.matched) ? 'border-emerald-700/20 bg-emerald-50' : 'border-rose-700/20 bg-rose-50';
+          const verdict = lot.correct ?? lot.matched;
+          const tone = verdict == null ? 'border bg-white' : verdict ? 'border-emerald-700/20 bg-emerald-50' : 'border-rose-700/20 bg-rose-50';
           return <li key={lot.itemId} className={`rounded-xl border p-4 ${tone}`}>
             <p className="font-bold leading-6">{item?.text}</p>
             <p className="mt-1 text-sm text-muted-foreground">{t('paidAmount', { amount: lot.amount, currency: snapshot.config.currencyName })}</p>
-            {lot.correct !== undefined && <p className={`mt-2 font-bold ${lot.correct ? 'text-emerald-800' : 'text-rose-800'}`}>{lot.correct ? t('answerCorrect') : t('answerIncorrect')}</p>}
+            {lot.correct != null && <p className={`mt-2 font-bold ${lot.correct ? 'text-emerald-800' : 'text-rose-800'}`}>{lot.correct ? t('answerCorrect') : t('answerIncorrect')}</p>}
             {targetRole && <div className="mt-2 flex items-center gap-2"><span className="text-sm text-muted-foreground">{t('belongsToRole')}</span><RoleBadge role={targetRole}/></div>}
             {item?.explanation && <p className="mt-2 text-sm leading-6">{item.explanation}</p>}
           </li>;
