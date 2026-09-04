@@ -11,6 +11,12 @@ const notoSans = Noto_Sans({
 export const metadata: Metadata = {
   title: 'Subasta de frases',
   description: 'Dinámicas participativas para contrastar conocimientos y descubrir valores y prioridades.',
+  icons: {
+    icon: [
+      { url: 'favicon.svg', type: 'image/svg+xml' },
+      { url: 'favicon.ico', sizes: '16x16 32x32 48x48' },
+    ],
+  },
 };
 
 export default function RootLayout({
