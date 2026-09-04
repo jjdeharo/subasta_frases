@@ -1,4 +1,4 @@
-export type Lang = 'es' | 'ca';
+export type Lang = 'es' | 'ca' | 'gl' | 'eu' | 'en' | 'de';
 export type Mode = 'knowledge' | 'values' | 'roles';
 export type IdentityMode = 'named' | 'anonymous';
 export type Screen = 'home' | 'editor' | 'join' | 'host' | 'participant';

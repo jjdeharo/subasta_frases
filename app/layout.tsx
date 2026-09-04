@@ -9,7 +9,7 @@ const notoSans = Noto_Sans({
 });
 
 export const metadata: Metadata = {
-  title: 'Subasta de frases · Subhasta de frases',
+  title: 'Subasta de frases',
   description: 'Dinámicas participativas para contrastar conocimientos y descubrir valores y prioridades.',
 };
 

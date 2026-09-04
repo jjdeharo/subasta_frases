@@ -38,6 +38,7 @@
   "cancel": "Cancelar",
   "settings": "Configuración",
   "currencyName": "Nombre de la moneda",
+  "defaultCurrency": "créditos",
   "currencyPlaceholder": "Ej.: créditos, einsteins, curies…",
   "budget": "Presupuesto inicial",
   "minimumBid": "Puja mínima",

@@ -8,7 +8,7 @@ import { ParticipantSession } from '@/components/participant-session';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
-import { detectLanguage, translate, type TranslationKey } from '@/lib/i18n';
+import { detectLanguage, languages, translate, type TranslationKey } from '@/lib/i18n';
 import { APP_VERSION } from '@/lib/version';
 import { readPreparedActivity } from '@/lib/share';
 import { normalizeConfig, type ActivityConfig, type Lang, type Screen } from '@/lib/types';
@@ -26,7 +26,7 @@ export default function SubastaApp() {
   const t = (key: TranslationKey, replacements?: Record<string, string | number>) => translate(lang, key, replacements);
 
   useEffect(() => {
-    const detected = detectLanguage(); setLang(detected); document.documentElement.lang = detected;
+    const detected = detectLanguage(); setLang(detected); document.documentElement.lang = detected; document.title = translate(detected, 'appName');
     const prepared = readPreparedActivity();
     const params = new URLSearchParams(window.location.search);
     const session = params.get('session');
@@ -51,7 +51,7 @@ export default function SubastaApp() {
     return () => media.removeEventListener('change', apply);
   }, [theme]);
 
-  function changeLanguage(next: Lang) { setLang(next); localStorage.setItem('subasta-lang', next); document.documentElement.lang = next; }
+  function changeLanguage(next: Lang) { setLang(next); localStorage.setItem('subasta-lang', next); document.documentElement.lang = next; document.title = translate(next, 'appName'); }
   function changeTheme(next: ThemePreference) { setTheme(next); localStorage.setItem('subasta-theme', next); }
   function openEditor() {
     let draft: ActivityConfig | null = null;
@@ -77,7 +77,7 @@ export default function SubastaApp() {
 function AppearanceControls({ lang, theme, onLanguageChange, onThemeChange, t }: { lang: Lang; theme: ThemePreference; onLanguageChange: (lang: Lang) => void; onThemeChange: (theme: ThemePreference) => void; t: (key: TranslationKey) => string }) {
   const ThemeIcon = theme === 'dark' ? Moon : theme === 'light' ? Sun : Monitor;
   return <div className="fixed bottom-4 right-4 z-40 flex flex-wrap items-center justify-end gap-1 rounded-2xl border bg-white/90 p-1.5 text-sm shadow-lg backdrop-blur">
-    <label className="flex items-center gap-2 rounded-xl px-2 py-1.5" title={t('language')}><Globe2 className="size-4 text-muted-foreground"/><span className="sr-only">{t('language')}</span><select aria-label={t('language')} className="bg-transparent font-semibold outline-none" value={lang} onChange={(event) => onLanguageChange(event.target.value as Lang)}><option value="es">Español</option><option value="ca">Català</option></select></label>
+    <label className="flex items-center gap-2 rounded-xl px-2 py-1.5" title={t('language')}><Globe2 className="size-4 text-muted-foreground"/><span className="sr-only">{t('language')}</span><select aria-label={t('language')} className="bg-transparent font-semibold outline-none" value={lang} onChange={(event) => onLanguageChange(event.target.value as Lang)}>{languages.map((item) => <option key={item.code} value={item.code}>{item.name}</option>)}</select></label>
     <span className="h-6 w-px bg-border" />
     <label className="flex items-center gap-2 rounded-xl px-2 py-1.5" title={t('appearance')}><ThemeIcon className="size-4 text-muted-foreground"/><span className="sr-only">{t('appearance')}</span><select aria-label={t('appearance')} className="bg-transparent font-semibold outline-none" value={theme} onChange={(event) => onThemeChange(event.target.value as ThemePreference)}><option value="system">{t('themeSystem')}</option><option value="light">{t('themeLight')}</option><option value="dark">{t('themeDark')}</option></select></label>
   </div>;

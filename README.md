@@ -1,4 +1,4 @@
-# Subasta de frases · Subhasta de frases
+# Subasta de frases
 
 Aplicación web para realizar dinámicas participativas en tiempo real. Puede utilizarse en el aula, en formación de profesorado o con grupos de personas adultas.
 
@@ -20,7 +20,7 @@ No hay un número máximo de frases impuesto por la aplicación.
 - Reconexión con identidad persistente en el mismo dispositivo.
 - Resultados colectivos y desglose individual opcional en las actividades de valores.
 - Exportación de resultados en CSV.
-- Interfaz en español y catalán, con detección automática y selector manual.
+- Interfaz en español, catalán, gallego, euskera, inglés y alemán, con detección automática y selector manual.
 
 ## Desarrollo local
 
@@ -44,10 +44,11 @@ npm run build
 
 1. Copiar uno de los archivos de `locales/` y traducir todos sus valores.
 2. Añadir el idioma a `locales/index.json`.
-3. Incorporar su código al tipo `Lang` y al registro de `lib/i18n.ts`.
-4. Añadirlo al selector de idioma de `app/page.tsx`.
+3. Incorporar su código al tipo `Lang` de `lib/types.ts` y a `dictionaries` y `languages` en `lib/i18n.ts`.
 
-La selección manual se guarda en el navegador. También puede indicarse mediante `?lang=es` o `?lang=ca`.
+El selector de idioma se genera a partir de `languages`, así que no hace falta tocarlo.
+
+La selección manual se guarda en el navegador. También puede indicarse mediante `?lang=` seguido del código del idioma (`es`, `ca`, `gl`, `eu`, `en` o `de`).
 
 ## Privacidad y funcionamiento
 

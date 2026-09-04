@@ -38,6 +38,7 @@
   "cancel": "Cancel·la",
   "settings": "Configuració",
   "currencyName": "Nom de la moneda",
+  "defaultCurrency": "crèdits",
   "currencyPlaceholder": "Ex.: crèdits, einsteins, curies…",
   "budget": "Pressupost inicial",
   "minimumBid": "Puja mínima",

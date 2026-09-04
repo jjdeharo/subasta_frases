@@ -19,7 +19,7 @@ interface Props {
 
 export function ActivityEditor({ lang, initial, onBack, onStart }: Props) {
   const t = (key: TranslationKey, replacements?: Record<string, string | number>) => translate(lang, key, replacements);
-  const [config, setConfig] = useState<ActivityConfig>(() => initial ? normalizeConfig({ ...initial, currencyName: initial.currencyName || (lang === 'ca' ? 'crèdits' : 'créditos') }) : { ...defaultConfig(), currencyName: lang === 'ca' ? 'crèdits' : 'créditos' });
+  const [config, setConfig] = useState<ActivityConfig>(() => initial ? normalizeConfig({ ...initial, currencyName: initial.currencyName || translate(lang, 'defaultCurrency') }) : { ...defaultConfig(), currencyName: translate(lang, 'defaultCurrency') });
   const [bulkOpen, setBulkOpen] = useState(false);
   const [bulk, setBulk] = useState('');
   const [preparedUrl, setPreparedUrl] = useState('');
@@ -75,7 +75,7 @@ export function ActivityEditor({ lang, initial, onBack, onStart }: Props) {
   function resetAll() {
     setConfirm(null); setPreparedUrl('');
     localStorage.removeItem('subasta-draft');
-    setConfig({ ...defaultConfig(), currencyName: lang === 'ca' ? 'crèdits' : 'créditos' });
+    setConfig({ ...defaultConfig(), currencyName: translate(lang, 'defaultCurrency') });
   }
   function prepare() {
     if (!valid) return;
